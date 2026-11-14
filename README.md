@@ -10,7 +10,7 @@
 </p>
 
 <!-- Demo: record a short screen capture (Win + Alt + R with Xbox Game Bar, or ShareX for a GIF) and save it as docs/demo.gif -->
-<p align="center"><img src="docs/demo.gif" width="640" alt="ibob demo"></p>
+<!-- <p align="center"><img src="docs/demo.gif" width="640" alt="ibob demo"></p> -->
 
 ---
 
