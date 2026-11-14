@@ -1,0 +1,344 @@
+<Window x:Class="Pip.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Pip" Width="600" Height="430" Top="0"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" ShowInTaskbar="False" ResizeMode="NoResize"
+        FontFamily="Segoe UI Variable Display, Segoe UI" Foreground="White"
+        MouseLeave="WindowLeft" PreviewKeyDown="KeyPressed">
+
+    <Window.Resources>
+        <!-- Thin rounded slider: white fill on a dark track -->
+        <Style x:Key="Bar" TargetType="Slider">
+            <Setter Property="IsMoveToPointEnabled" Value="True"/>
+            <Setter Property="Minimum" Value="0"/>
+            <Setter Property="Maximum" Value="100"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid Height="22" Background="Transparent">
+                            <Border Height="6" CornerRadius="3" Background="#3A3A3C"/>
+                            <Track x:Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="Slider.DecreaseLarge">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate><Border Height="6" CornerRadius="3" Background="White"/></ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate><Ellipse Width="14" Height="14" Fill="White"/></ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Rounded pill button used for toggles and media controls -->
+        <Style x:Key="Chip" TargetType="Button">
+            <Setter Property="Background" Value="#2C2C2E"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="12,7"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="22" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="Icon" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe Fluent Icons"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+    <Border x:Name="Pill" Width="84" Height="22" CornerRadius="11" Background="Black"
+            VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,4,0,0" ClipToBounds="True"
+            MouseEnter="Expand" MouseLeave="Collapse" MouseWheel="Scrolled"
+            AllowDrop="True" DragEnter="FilesDragOver" DragOver="FilesDragOver" DragLeave="FilesDragLeave" Drop="FilesDropped">
+        <Border.ContextMenu>
+            <ContextMenu>
+                <MenuItem Header="Close Pip" Click="Quit"/>
+            </ContextMenu>
+        </Border.ContextMenu>
+        <Grid>
+            <!-- Collapsed: little eyes (blink, glance, nod to music), charging status, or a voice line -->
+            <Grid x:Name="Mini">
+                <StackPanel x:Name="Eyes" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                    <StackPanel.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform x:Name="EyeScale"/>
+                            <TranslateTransform x:Name="EyeMove"/>
+                            <ScaleTransform x:Name="Squint"/>
+                            <TranslateTransform x:Name="Bob"/>
+                        </TransformGroup>
+                    </StackPanel.RenderTransform>
+                    <Border Width="4" Height="7" CornerRadius="2" Background="White" Margin="3,0"/>
+                    <Border Width="4" Height="7" CornerRadius="2" Background="White" Margin="3,0"/>
+                </StackPanel>
+                <TextBlock x:Name="Status" FontSize="11" FontWeight="SemiBold" Opacity="0"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                    <TextBlock.RenderTransform><ScaleTransform x:Name="StatusScale"/></TextBlock.RenderTransform>
+                </TextBlock>
+                <Polyline x:Name="Wave" Width="64" Height="22" HorizontalAlignment="Center" Visibility="Collapsed" Stroke="White"
+                          StrokeThickness="1.5" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                <!-- New notification: app icon + sender, shown for a few seconds -->
+                <StackPanel x:Name="Alert" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
+                    <Border x:Name="AlertIcon" Width="18" Height="18" CornerRadius="5" Margin="0,0,8,0"/>
+                    <TextBlock x:Name="AlertText" FontSize="12" FontWeight="SemiBold" MaxWidth="180" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Expanded: two pages, switched with the mouse wheel -->
+            <Grid x:Name="Big" Width="376" Margin="22,18" Opacity="0" Visibility="Collapsed" HorizontalAlignment="Left" VerticalAlignment="Top">
+
+                <!-- Page 1: now playing -->
+                <StackPanel x:Name="MusicPage">
+                    <DockPanel>
+                        <Border x:Name="Art" Width="64" Height="64" CornerRadius="12" Background="#2C2C2E" Margin="0,0,14,0">
+                            <TextBlock x:Name="ArtIcon" Style="{StaticResource Icon}" Text="&#xE8D6;" FontSize="24" Foreground="#8E8E93" HorizontalAlignment="Center"/>
+                        </Border>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock x:Name="SongTitle" FontSize="15" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="SongArtist" FontSize="12" Foreground="#8E8E93" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </DockPanel>
+                    <Slider x:Name="Seek" Style="{StaticResource Bar}" Margin="0,14,0,0" ValueChanged="SeekMoved" PreviewMouseLeftButtonUp="SeekReleased"/>
+                    <DockPanel>
+                        <TextBlock x:Name="Total" DockPanel.Dock="Right" FontSize="11" Foreground="#8E8E93"/>
+                        <TextBlock x:Name="Elapsed" FontSize="11" Foreground="#8E8E93"/>
+                    </DockPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2,0,0">
+                        <Button Style="{StaticResource Chip}" Background="Transparent" Padding="10" Click="PreviousSong">
+                            <TextBlock Style="{StaticResource Icon}" FontSize="18" Text="&#xE892;"/>
+                        </Button>
+                        <Button Style="{StaticResource Chip}" Background="White" Foreground="Black" Width="44" Height="44" Padding="0" Margin="20,0" Click="PlayPause">
+                            <TextBlock x:Name="PlayIcon" Style="{StaticResource Icon}" FontSize="18"/>
+                        </Button>
+                        <Button Style="{StaticResource Chip}" Background="Transparent" Padding="10" Click="NextSong">
+                            <TextBlock Style="{StaticResource Icon}" FontSize="18" Text="&#xE893;"/>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Page 2: clock, battery, volume, brightness, toggles -->
+                <StackPanel x:Name="ControlsPage" Visibility="Collapsed">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" HorizontalAlignment="Right">
+                            <TextBlock x:Name="BigBattery" FontSize="26" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                            <TextBlock x:Name="BatteryState" FontSize="12" Foreground="#8E8E93" HorizontalAlignment="Right"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock x:Name="BigTime" FontSize="26" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="Date" FontSize="12" Foreground="#8E8E93"/>
+                        </StackPanel>
+                    </DockPanel>
+
+                    <DockPanel Margin="0,14,0,0">
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE767;" Margin="0,0,12,0"/>
+                        <TextBlock x:Name="VolumeText" DockPanel.Dock="Right" Width="38" TextAlignment="Right" FontSize="12" Foreground="#8E8E93" VerticalAlignment="Center"/>
+                        <Slider x:Name="Volume" Style="{StaticResource Bar}" ValueChanged="VolumeChanged"/>
+                    </DockPanel>
+
+                    <DockPanel x:Name="BrightnessRow" Margin="0,6,0,0">
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE706;" Margin="0,0,12,0"/>
+                        <TextBlock x:Name="BrightnessText" DockPanel.Dock="Right" Width="38" TextAlignment="Right" FontSize="12" Foreground="#8E8E93" VerticalAlignment="Center"/>
+                        <Slider x:Name="Brightness" Style="{StaticResource Bar}" ValueChanged="BrightnessChanged"/>
+                    </DockPanel>
+
+                    <UniformGrid Columns="3" Margin="-4,14,-4,0">
+                        <Button x:Name="WifiButton" Style="{StaticResource Chip}" Margin="4,0" Click="ToggleWifi">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Style="{StaticResource Icon}" FontSize="14" Text="&#xE701;" Margin="0,0,8,0"/>
+                                <TextBlock x:Name="WifiText" FontSize="12" MaxWidth="72" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="BluetoothButton" Style="{StaticResource Chip}" Margin="4,0" Click="ToggleBluetooth">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Style="{StaticResource Icon}" FontSize="14" Text="&#xE702;" Margin="0,0,8,0"/>
+                                <TextBlock x:Name="BluetoothText" FontSize="12" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="MicButton" Style="{StaticResource Chip}" Margin="4,0" Click="ToggleMic">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock x:Name="MicIcon" Style="{StaticResource Icon}" FontSize="14" Margin="0,0,8,0"/>
+                                <TextBlock x:Name="MicText" FontSize="12" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </UniformGrid>
+                </StackPanel>
+
+                <!-- Page 3: notifications -->
+                <DockPanel x:Name="NotificationsPage" Visibility="Collapsed" Height="164">
+                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                        <Button Style="{StaticResource Chip}" DockPanel.Dock="Right" Padding="12,3" Click="ClearNotifications">
+                            <TextBlock Text="Clear" FontSize="11"/>
+                        </Button>
+                        <TextBlock Text="Notifications" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <Grid>
+                        <TextBlock x:Name="NoNotifications" Text="You're all caught up" FontSize="12" Foreground="#8E8E93"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/>
+                        <ItemsControl x:Name="NotificationList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Margin="0,0,0,8">
+                                        <Border Width="26" Height="26" CornerRadius="7" Background="#2C2C2E" Margin="0,0,10,0" VerticalAlignment="Top">
+                                            <Image Source="{Binding Icon}" Stretch="UniformToFill"/>
+                                        </Border>
+                                        <StackPanel>
+                                            <DockPanel>
+                                                <TextBlock DockPanel.Dock="Right" Text="{Binding Time}" FontSize="10" Foreground="#8E8E93" Margin="8,0,0,0"/>
+                                                <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                            </DockPanel>
+                                            <TextBlock Text="{Binding Body}" FontSize="11" Foreground="#AEAEB2" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </DockPanel>
+
+                <!-- Page 4: file shelf -->
+                <DockPanel x:Name="ShelfPage" Visibility="Collapsed" Height="164">
+                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                        <!-- Normal buttons -->
+                        <StackPanel x:Name="ShelfButtons" DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button x:Name="AutoButton" Style="{StaticResource Chip}" Padding="12,3" Click="ToggleAuto"
+                                    ToolTip="When on, anything you copy (text, files, images, screenshots) is saved here automatically">
+                                <TextBlock Text="Auto" FontSize="11"/>
+                            </Button>
+                            <Button Style="{StaticResource Chip}" Padding="12,3" Margin="6,0,0,0" Click="PasteToShelf">
+                                <TextBlock Text="Paste" FontSize="11"/>
+                            </Button>
+                            <Button Style="{StaticResource Chip}" Padding="12,3" Margin="6,0,0,0" Click="ClearShelf">
+                                <TextBlock Text="Clear" FontSize="11"/>
+                            </Button>
+                        </StackPanel>
+                        <!-- While picking files to merge -->
+                        <StackPanel x:Name="MergeButtons" DockPanel.Dock="Right" Orientation="Horizontal" Visibility="Collapsed">
+                            <Button Style="{StaticResource Chip}" Padding="12,3" Click="CancelMerge">
+                                <TextBlock Text="Cancel" FontSize="11"/>
+                            </Button>
+                            <Button Style="{StaticResource Chip}" Background="#0A84FF" Padding="12,3" Margin="6,0,0,0" Click="MergeClicked">
+                                <TextBlock x:Name="MergeButtonText" Text="Merge" FontSize="11"/>
+                            </Button>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock x:Name="ShelfTitle" Text="Shelf" FontSize="15" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="ShelfStatus" FontSize="11" Foreground="#8E8E93" Margin="10,0,0,0" VerticalAlignment="Center"
+                                       MaxWidth="150" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                    </DockPanel>
+                    <Grid>
+                        <TextBlock x:Name="ShelfHint" Text="Copy text, a file, an image or a screenshot and it lands here.&#x0a;Drag items out to use them, right-click for more."
+                                   FontSize="12" Foreground="#8E8E93" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
+                        <ItemsControl x:Name="ShelfList">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Width="72" Margin="0,0,3,4" CornerRadius="10" Cursor="Hand" ToolTip="{Binding Path}"
+                                            MouseMove="ShelfItemDrag" MouseLeftButtonUp="ShelfItemClick"
+                                            MouseRightButtonUp="ShelfItemMenu" ContextMenuOpening="SkipMenu">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <!-- Picked for merging: blue tint. Not mergeable while picking: faded. -->
+                                                <Setter Property="Background" Value="#330A84FF"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Badge}" Value="{x:Null}">
+                                                        <Setter Property="Background" Value="Transparent"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Dimmed}" Value="True">
+                                                        <Setter Property="Opacity" Value="0.3"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid>
+                                            <StackPanel Margin="0,4">
+                                                <Grid Width="32" Height="32">
+                                                    <Image Source="{Binding Icon}"/>
+                                                    <TextBlock Text="{Binding Glyph}" Style="{StaticResource Icon}" FontSize="26" HorizontalAlignment="Center" Foreground="#FFD60A"/>
+                                                </Grid>
+                                                <TextBlock Text="{Binding Name}" FontSize="10" TextTrimming="CharacterEllipsis" TextAlignment="Center" Margin="4,3,4,0"/>
+                                            </StackPanel>
+                                            <!-- Merge order number -->
+                                            <Border Width="18" Height="18" CornerRadius="9" Background="#0A84FF" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,8,0">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Badge}" Value="{x:Null}">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock Text="{Binding Badge}" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </DockPanel>
+            </Grid>
+
+            <!-- Preview board: right-click a shelf item to see it big -->
+            <DockPanel x:Name="Board" Visibility="Collapsed" Opacity="0" Margin="20,16">
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+                    <Button Style="{StaticResource Chip}" Padding="9,6" Margin="0,0,10,0" Click="CloseBoard" ToolTip="Back to shelf">
+                        <TextBlock Style="{StaticResource Icon}" FontSize="11" Text="&#xE72B;"/>
+                    </Button>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="10,0,0,0">
+                        <Button Style="{StaticResource Chip}" Padding="12,4" Click="BoardOpen"><TextBlock Text="Open" FontSize="11"/></Button>
+                        <Button Style="{StaticResource Chip}" Padding="12,4" Margin="6,0,0,0" Click="BoardCopy"><TextBlock Text="Copy" FontSize="11"/></Button>
+                        <Button Style="{StaticResource Chip}" Padding="12,4" Margin="6,0,0,0" Click="BoardRemove"><TextBlock Text="Remove" FontSize="11" Foreground="#FF453A"/></Button>
+                    </StackPanel>
+                    <TextBlock x:Name="BoardTitle" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                </DockPanel>
+                <Grid>
+                    <Image x:Name="BoardImage" Stretch="Uniform"/>
+                    <TextBox x:Name="BoardText" IsReadOnly="True" TextWrapping="Wrap" Background="Transparent" BorderThickness="0"
+                             Foreground="White" FontSize="13" CaretBrush="White" SelectionBrush="#0A84FF"
+                             ScrollViewer.VerticalScrollBarVisibility="Hidden"/>
+                    <ScrollViewer x:Name="BoardPdf" VerticalScrollBarVisibility="Hidden">
+                        <StackPanel x:Name="BoardPages"/>
+                    </ScrollViewer>
+                    <StackPanel x:Name="BoardInfo" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Image x:Name="BoardInfoIcon" Width="48" Height="48"/>
+                        <TextBlock x:Name="BoardInfoText" FontSize="12" Foreground="#8E8E93" Margin="0,10,0,0" TextAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+            </DockPanel>
+
+            <!-- Page dots on the right edge, hinting that you can scroll -->
+            <StackPanel x:Name="Dots" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,9,0" Visibility="Collapsed">
+                <Ellipse Width="5" Height="5" Fill="White" Margin="0,3"/>
+                <Ellipse Width="5" Height="5" Fill="White" Margin="0,3"/>
+                <Ellipse Width="5" Height="5" Fill="White" Margin="0,3"/>
+                <Ellipse Width="5" Height="5" Fill="White" Margin="0,3"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+
+    <!-- Right-click ring: buttons are placed around the cursor in code. The almost-invisible background catches outside clicks to close it. -->
+    <Canvas x:Name="Radial" Visibility="Collapsed" Background="#01000000" MouseLeftButtonDown="RadialBackgroundClicked"/>
+    </Grid>
+</Window>

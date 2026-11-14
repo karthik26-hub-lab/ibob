@@ -1,0 +1,10 @@
+# Build output
+bin/
+obj/
+publish/
+
+# Editor / OS files
+.vs/
+*.user
+.DS_Store
+Thumbs.db
