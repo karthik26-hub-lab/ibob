@@ -14,7 +14,7 @@ using Windows.Data.Pdf;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
-namespace Pip;
+namespace Ibob;
 
 // The preview board: right-click a shelf item and the pill grows into a board that shows it.
 public partial class MainWindow
@@ -43,14 +43,14 @@ public partial class MainWindow
 
         ShowOnly(null);
         try { await ShowPreview(item.Path); }
-        catch { ShowInfo(item, "Can't preview this file â€” use Open"); }
+        catch { ShowInfo(item, "Can't preview this file — use Open"); }
     }
 
     async Task ShowPreview(string path)
     {
         string type = Path.GetExtension(path).ToLowerInvariant();
 
-        if (Directory.Exists(path)) ShowInfo(boardItem, "Folder â€” use Open to see what's inside");
+        if (Directory.Exists(path)) ShowInfo(boardItem, "Folder — use Open to see what's inside");
         else if (ImageTypes.Contains(type))
         {
             var image = new BitmapImage();
@@ -65,7 +65,7 @@ public partial class MainWindow
         else if (type == ".pdf") await ShowPdf(path);
         else if (type == ".docx") { BoardText.Text = WordText(path); ShowOnly(BoardText); }
         else if (TextTypes.Contains(type) && new FileInfo(path).Length <= MaxTextBytes) { BoardText.Text = File.ReadAllText(path); ShowOnly(BoardText); }
-        else ShowInfo(boardItem, "No preview for this type â€” use Open");
+        else ShowInfo(boardItem, "No preview for this type — use Open");
     }
 
     // Renders the first pages of a PDF as images using Windows' built-in PDF reader.
@@ -87,7 +87,7 @@ public partial class MainWindow
             BoardPages.Children.Add(new Image { Source = image, Margin = new Thickness(0, 0, 0, 8) });
         }
         if (pdf.PageCount > MaxPdfPages)
-            BoardPages.Children.Add(new TextBlock { Text = $"Showing {MaxPdfPages} of {pdf.PageCount} pages â€” use Open for the rest", Foreground = Gray, FontSize = 11 });
+            BoardPages.Children.Add(new TextBlock { Text = $"Showing {MaxPdfPages} of {pdf.PageCount} pages — use Open for the rest", Foreground = Gray, FontSize = 11 });
     }
 
     // A .docx is a zip; the text lives in word/document.xml as <w:t> pieces inside <w:p> paragraphs.

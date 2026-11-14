@@ -16,7 +16,7 @@ using PdfSharp.Pdf;
 using PdfSharp.Pdf.IO;
 using PigDocument = UglyToad.PdfPig.PdfDocument;
 
-namespace Pip;
+namespace Ibob;
 
 // Turns shelf files into PDFs (single or merged) and Markdown (.md). Results are written into the given folder.
 static class Converters
@@ -28,7 +28,7 @@ static class Converters
 
     static string Ext(string path) => Path.GetExtension(path).ToLowerInvariant();
 
-    // "photo.jpg" â†’ "photo (2).jpg" if the name is already taken.
+    // "photo.jpg" → "photo (2).jpg" if the name is already taken.
     public static string UniquePath(string folder, string name)
     {
         string path = Path.Combine(folder, name);

@@ -8,7 +8,7 @@ using System.Windows.Threading;
 using Windows.UI.Notifications;
 using Windows.UI.Notifications.Management;
 
-namespace Pip;
+namespace Ibob;
 
 // One row on the notifications page.
 public record Note(ImageSource Icon, string Title, string Body, string Time);
@@ -28,7 +28,7 @@ public partial class MainWindow
         if (await listener.RequestAccessAsync() != UserNotificationListenerAccessStatus.Allowed)
         {
             listener = null;
-            NoNotifications.Text = "Turn on notification access for apps in\nSettings â†’ Privacy & security â†’ Notifications";
+            NoNotifications.Text = "Turn on notification access for apps in\nSettings → Privacy & security → Notifications";
             return;
         }
 
@@ -98,7 +98,8 @@ public partial class MainWindow
     void ShowAlert(ImageSource icon, string text, int page)
     {
         if (isOpen) return;
-        AlertIcon.Background = icon == null ? Gray : new ImageBrush(icon) { Stretch = Stretch.Uniform };
+        AlertIcon.Visibility = icon == null ? Visibility.Collapsed : Visibility.Visible;   // timer alerts have no icon
+        AlertIcon.Background = icon == null ? null : new ImageBrush(icon) { Stretch = Stretch.Uniform };
         AlertText.Text = text;
         alertPage = page;
         alerting = true;

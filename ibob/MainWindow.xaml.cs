@@ -18,7 +18,7 @@ using Windows.Networking.Connectivity;
 using Windows.Storage.Streams;
 using Forms = System.Windows.Forms;
 
-namespace Pip;
+namespace Ibob;
 
 public partial class MainWindow : Window
 {
@@ -26,8 +26,8 @@ public partial class MainWindow : Window
     static readonly Brush Red = new SolidColorBrush(Color.FromRgb(255, 69, 58));
     static readonly Brush Gray = new SolidColorBrush(Color.FromRgb(44, 44, 46));
     static readonly Brush Blue = new SolidColorBrush(Color.FromRgb(10, 132, 255));
-    const string PlayGlyph = "î¨", PauseGlyph = "î©";
-    const int MusicIndex = 0, ControlsIndex = 1, NotificationsIndex = 2, ShelfIndex = 3;
+    const string PlayGlyph = "", PauseGlyph = "";
+    const int MusicIndex = 0, ControlsIndex = 1, NotificationsIndex = 2, ShelfIndex = 3, ClipboardIndex = 4, FocusIndex = 5;
 
     readonly MMDeviceEnumerator devices = new();
     MMDevice speaker, mic;
@@ -62,6 +62,8 @@ public partial class MainWindow : Window
 
         ConnectToWindows();
         LoadShelf();
+        LoadHistory();
+        SetUpFocus();
         StartNotifications();
     }
 
@@ -89,14 +91,14 @@ public partial class MainWindow : Window
         var power = Forms.SystemInformation.PowerStatus;
         int percent = (int)Math.Round(power.BatteryLifePercent * 100);
         bool charging = power.PowerLineStatus == Forms.PowerLineStatus.Online;
-        BigBattery.Text = (charging ? "âš¡ " : "") + percent + "%";
+        BigBattery.Text = (charging ? "⚡ " : "") + percent + "%";
         BatteryState.Text = charging ? "Charging"
             : power.BatteryLifeRemaining > 0 ? TimeSpan.FromSeconds(power.BatteryLifeRemaining).ToString(@"h\h\ mm\m") + " left"
             : "On battery";
         BigBattery.Foreground = percent <= 20 && !charging ? Red : Green;
 
         // Charger just plugged in, or battery just hit 100% while charging.
-        if (wasCharging == false && charging) ShowStatus("âš¡ " + percent + "%");
+        if (wasCharging == false && charging) ShowStatus("⚡ " + percent + "%");
         else if (charging && percent == 100 && lastPercent < 100) ShowStatus("100%");
         wasCharging = charging;
         lastPercent = percent;
@@ -254,10 +256,10 @@ public partial class MainWindow : Window
 
     void ShowMic()
     {
-        if (mic == null) { MicIcon.Text = "î±”"; MicText.Text = "No mic"; MicButton.Background = Gray; return; }
+        if (mic == null) { MicIcon.Text = ""; MicText.Text = "No mic"; MicButton.Background = Gray; return; }
 
         bool muted = mic.AudioEndpointVolume.Mute;
-        MicIcon.Text = muted ? "î±”" : "îœ ";
+        MicIcon.Text = muted ? "" : "";
         MicText.Text = muted ? "Mic off" : "Mic on";
         MicButton.Background = muted ? Red : Gray;
     }
@@ -361,9 +363,9 @@ public partial class MainWindow : Window
         Animate(84, 22, open: false);
     }
 
-    FrameworkElement[] Pages => new FrameworkElement[] { MusicPage, ControlsPage, NotificationsPage, ShelfPage };
+    FrameworkElement[] Pages => new FrameworkElement[] { MusicPage, ControlsPage, NotificationsPage, ShelfPage, ClipboardPage, FocusPage };
 
-    // Wheel down â†’ next page, wheel up â†’ previous page.
+    // Wheel down → next page, wheel up → previous page.
     void Scrolled(object sender, MouseWheelEventArgs e)
     {
         int next = Math.Clamp(page + (e.Delta < 0 ? 1 : -1), 0, Pages.Length - 1);

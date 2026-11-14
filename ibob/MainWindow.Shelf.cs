@@ -12,7 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Forms = System.Windows.Forms;
 
-namespace Pip;
+namespace Ibob;
 
 // One file or folder parked on the shelf. Glyph is a folder icon used when there's no file icon.
 // Badge (merge order number) and Dimmed (can't be merged) change while picking files to merge.
@@ -64,7 +64,7 @@ public partial class MainWindow
         if (shelf.Count == ShelfLimit) Forget(shelf[0]);   // oldest makes room
 
         var icon = File.Exists(path) ? FileIcon(path) : null;
-        var added = new ShelfItem(path, System.IO.Path.GetFileName(path.TrimEnd('\\')), icon, icon == null ? "î¢·" : "");
+        var added = new ShelfItem(path, System.IO.Path.GetFileName(path.TrimEnd('\\')), icon, icon == null ? "" : "");
         shelf.Add(added);
         return added;
     }
@@ -151,10 +151,11 @@ public partial class MainWindow
     IntPtr ClipboardHook(IntPtr window, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
         const int ClipboardChanged = 0x031D;
-        if (message == ClipboardChanged && autoShelf && DateTime.Now > ignoreClipboardUntil) TakeFromClipboard();
+        if (message == ClipboardChanged && DateTime.Now > ignoreClipboardUntil) TakeFromClipboard();
         return IntPtr.Zero;
     }
 
+    // Copied text always goes into clipboard history; with Auto on, copies also land on the shelf.
     // The app that just copied may still be holding the clipboard, so retry briefly.
     async void TakeFromClipboard()
     {
@@ -165,8 +166,10 @@ public partial class MainWindow
             {
                 var data = Clipboard.GetDataObject();
                 if (IsPrivate(data)) return;
+                if (data.GetData(DataFormats.UnicodeText) is string text && !data.GetDataPresent(DataFormats.FileDrop)) Remember(text);
+                if (!autoShelf) return;
                 var added = AddFrom(data);
-                if (added != null) ShowAlert(added.Icon, "Shelf Â· " + added.Name, ShelfIndex);
+                if (added != null) ShowAlert(added.Icon, "Shelf · " + added.Name, ShelfIndex);
                 return;
             }
             catch (COMException) { }

@@ -7,7 +7,7 @@ using System.Text;
 using System.Windows;
 using ComDataObject = System.Runtime.InteropServices.ComTypes.IDataObject;
 
-namespace Pip;
+namespace Ibob;
 
 // Apps like WhatsApp and Outlook don't drag real file paths; they drag the file's bytes ("virtual files").
 // This reads each one and saves it into a folder so it becomes a normal file.

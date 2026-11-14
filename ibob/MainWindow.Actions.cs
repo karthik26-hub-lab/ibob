@@ -12,7 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 
-namespace Pip;
+namespace Ibob;
 
 // Right-click ring of actions for a shelf item, the actions themselves, and picking files to merge.
 public partial class MainWindow
@@ -32,16 +32,17 @@ public partial class MainWindow
     {
         var actions = new List<(string, string, Action)>
         {
-            ("Preview", "î¢", () => OpenBoard(item)),
-            ("Open", "î¢§", () => OpenFile(item)),
+            ("Preview", "", () => OpenBoard(item)),
+            ("Open", "", () => OpenFile(item)),
         };
-        if (Converters.CanMakePdf(item.Path)) actions.Add(("To PDF", "îª", () => Convert(item, Converters.ToPdf, "PDF")));
+        if (Converters.CanMakePdf(item.Path)) actions.Add(("To PDF", "", () => Convert(item, Converters.ToPdf, "PDF")));
+        if (ImageTypes.Contains(Path.GetExtension(item.Path).ToLowerInvariant())) actions.Add(("Extract text", "Aa", () => ExtractText(item)));
         if (Converters.CanMakeMarkdown(item.Path)) actions.Add(("To Markdown", "MD", () => Convert(item, Converters.ToMarkdown, "Markdown")));
         if (Converters.CanMerge(item.Path) && shelf.Any(other => other != item && Converters.CanMerge(other.Path)))
-            actions.Add(("Merge", "î ž", () => StartMerge(item)));
-        actions.Add(("Copy", "î£ˆ", () => CopyItem(item)));
-        if (File.Exists(item.Path)) actions.Add(("Save", "îŽ", () => SaveItem(item)));
-        actions.Add(("Remove", "î", () => { Forget(item); SaveShelf(); }));
+            actions.Add(("Merge", "", () => StartMerge(item)));
+        actions.Add(("Copy", "", () => CopyItem(item)));
+        if (File.Exists(item.Path)) actions.Add(("Save", "", () => SaveItem(item)));
+        actions.Add(("Remove", "", () => { Forget(item); SaveShelf(); }));
         return actions;
     }
 
@@ -202,7 +203,7 @@ public partial class MainWindow
     // Runs a conversion in the background and puts the result on the shelf.
     async void Convert(ShelfItem item, Func<string, string, string> convert, string what)
     {
-        SetShelfStatus($"Making {what}â€¦");
+        SetShelfStatus($"Making {what}…");
         try
         {
             Directory.CreateDirectory(ShelfFolder);
@@ -212,12 +213,38 @@ public partial class MainWindow
         catch (Exception e) { SetShelfStatus("Couldn't convert: " + e.GetBaseException().Message); }
     }
 
+    // Reads the text in an image (screenshots, photos of slides or notes) with Windows' built-in OCR,
+    // copies it, and puts it on the shelf and in clipboard history.
+    async void ExtractText(ShelfItem item)
+    {
+        SetShelfStatus("Reading text…");
+        try
+        {
+            var file = await Windows.Storage.StorageFile.GetFileFromPathAsync(item.Path);
+            using var stream = await file.OpenAsync(Windows.Storage.FileAccessMode.Read);
+            var decoder = await Windows.Graphics.Imaging.BitmapDecoder.CreateAsync(stream);
+            using var bitmap = await decoder.GetSoftwareBitmapAsync();
+            var ocr = Windows.Media.Ocr.OcrEngine.TryCreateFromUserProfileLanguages()
+                      ?? throw new InvalidOperationException("no text-recognition language is installed");
+
+            var result = await ocr.RecognizeAsync(bitmap);
+            string text = string.Join("\n", result.Lines.Select(line => line.Text));
+            if (text.Length == 0) { SetShelfStatus("No text found"); return; }
+
+            ignoreClipboardUntil = DateTime.Now.AddSeconds(1);
+            Clipboard.SetText(text);
+            Remember(text);
+            Finished(SaveText(text), "Text copied");
+        }
+        catch (Exception e) { SetShelfStatus("Couldn't read text: " + e.Message); }
+    }
+
     void Finished(string result, string message)
     {
         var added = AddToShelf(result);
         SaveShelf();
         SetShelfStatus(message);
-        if (added != null) ShowAlert(added.Icon, "Shelf Â· " + added.Name, ShelfIndex);   // only shows if the island is closed
+        if (added != null) ShowAlert(added.Icon, "Shelf · " + added.Name, ShelfIndex);   // only shows if the island is closed
     }
 
     void SetShelfStatus(string text) => ShelfStatus.Text = text;
@@ -267,7 +294,7 @@ public partial class MainWindow
         var files = mergePicks.Select(item => item.Path).ToList();
         EndMerge();
 
-        SetShelfStatus($"Merging {files.Count} filesâ€¦");
+        SetShelfStatus($"Merging {files.Count} files…");
         try
         {
             Directory.CreateDirectory(ShelfFolder);
