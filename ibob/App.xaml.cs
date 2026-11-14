@@ -20,6 +20,9 @@ public partial class App : System.Windows.Application
     protected override void OnStartup(System.Windows.StartupEventArgs e)
     {
         base.OnStartup(e);
+        // ibob.exe --screenshots <folder> : save sample-data screenshots of every screen, then quit
+        if (e.Args.Length >= 2 && e.Args[0] == "--screenshots") { TakeScreenshots(e.Args[1]); return; }
+
         bool ask = !e.Args.Contains("--quiet");
         if (e.Args.Contains("--uninstall")) { Installer.Uninstall(ask); Shutdown(); return; }
         if (Installer.OfferInstall(ask: !e.Args.Contains("--install"))) { Shutdown(); return; }
@@ -30,6 +33,15 @@ public partial class App : System.Windows.Application
         ShutdownMode = System.Windows.ShutdownMode.OnMainWindowClose;   // closing the pill closes Settings too
         MainWindow = new MainWindow();
         MainWindow.Show();
+    }
+
+    // A hidden, off-screen window filled with sample data (see MainWindow.Demo.cs).
+    async void TakeScreenshots(string folder)
+    {
+        var window = new MainWindow(demo: true) { Left = -3000, Top = -3000, ShowActivated = false };
+        window.Show();
+        try { await window.TakeScreenshots(folder); }
+        finally { Shutdown(); }
     }
 
     public App()

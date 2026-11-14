@@ -43,10 +43,16 @@ public partial class MainWindow : Window
     string lastSong;
     double voiceLevel, musicLevel, phase;
 
-    public MainWindow()
+    // demo = true: screenshot mode (see MainWindow.Demo.cs). Only the layout is built; none of your data is
+    // loaded, nothing watches the clipboard or system, and no settings are touched.
+    readonly bool demo;
+
+    public MainWindow(bool demo = false)
     {
+        this.demo = demo;
         InitializeComponent();
         BuildTabs();
+        if (demo) return;
         SourceInitialized += (_, _) => { HideFromAltTab(); WatchClipboard(); ApplySettings(); };
         // Monitors plugged in/out or resolution changed: move back to the top centre of the chosen screen.
         Microsoft.Win32.SystemEvents.DisplaySettingsChanged += (_, _) => Dispatcher.Invoke(PlaceOnScreen);
@@ -100,6 +106,7 @@ public partial class MainWindow : Window
         BigBattery.ToolTip = charging ? "Charging"
             : power.BatteryLifeRemaining > 0 ? TimeSpan.FromSeconds(power.BatteryLifeRemaining).ToString(@"h\h\ mm\m") + " left"
             : "On battery";
+        DateLine.Text = $"{BigTime.ToolTip} · {BigBattery.ToolTip}";   // quick-settings screen: "Sunday, 15 November · 3h 20m left"
         BigBattery.Foreground = percent <= 20 && !charging ? Red : Green;
 
         // Charger just plugged in, or battery just hit 100% while charging.
@@ -217,14 +224,14 @@ public partial class MainWindow : Window
 
     void VolumeChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
-        speaker.AudioEndpointVolume.MasterVolumeLevelScalar = (float)(e.NewValue / 100);
         VolumeText.Text = (int)e.NewValue + "%";
+        if (!demo) speaker.AudioEndpointVolume.MasterVolumeLevelScalar = (float)(e.NewValue / 100);   // screenshot mode never touches your real volume
     }
 
     void BrightnessChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
         BrightnessText.Text = (int)e.NewValue + "%";
-        if (!syncingBrightness) SetBrightness((int)e.NewValue);
+        if (!syncingBrightness && !demo) SetBrightness((int)e.NewValue);   // ...or your screen brightness
     }
 
     // Laptop screen brightness through WMI. Returns -1 if the screen doesn't support it (e.g. external monitor).

@@ -8,3 +8,6 @@ publish/
 *.user
 .DS_Store
 Thumbs.db
+
+# LinkedIn slides (made from docs/screenshots, not part of the app)
+linkedin/

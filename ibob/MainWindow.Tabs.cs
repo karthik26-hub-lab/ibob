@@ -71,6 +71,7 @@ public partial class MainWindow
     void ShowPage(int index)
     {
         index = ShownPage(index);
+        if (index == HomeIndex) ShowHomeScreen(quick: false);   // Home always opens on the music screen
         double from = index > page ? 30 : -30;
         page = index;
         var pages = Pages;
@@ -88,13 +89,37 @@ public partial class MainWindow
 
     // Mouse wheel: a list under the mouse (tasks, notes, ...) scrolls first. Once it's at its end,
     // or over anything that doesn't scroll, the wheel moves to the next / previous tab, so it never gets stuck.
+    // On Home, the wheel first moves between its two screens (music ↔ quick settings), then on to the next tab.
     void Scrolled(object sender, MouseWheelEventArgs e)
     {
         if (!isOpen || boardOpen || radialOpen) return;
         if (CanStillScroll(e.OriginalSource as DependencyObject, e.Delta)) return;
         e.Handled = true;
-        int next = NextShownPage(page, e.Delta < 0 ? 1 : -1);
-        if (next != page) ShowPage(next);
+
+        bool down = e.Delta < 0;
+        if (page == HomeIndex && down != homeQuick) { ShowHomeScreen(quick: down); return; }
+
+        int next = NextShownPage(page, down ? 1 : -1);
+        if (next == page) return;
+        ShowPage(next);
+        if (next == HomeIndex && !down) ShowHomeScreen(quick: true);   // coming back up lands on quick settings
+    }
+
+    bool homeQuick;   // false = music screen, true = quick settings screen
+
+    void ShowHomeScreen(bool quick)
+    {
+        homeQuick = quick;
+        MusicView.Visibility = quick ? Visibility.Collapsed : Visibility.Visible;
+        QuickView.Visibility = quick ? Visibility.Visible : Visibility.Collapsed;
+        HomeDot1.Opacity = quick ? 0.3 : 1;
+        HomeDot2.Opacity = quick ? 1 : 0.3;
+
+        FrameworkElement shown = quick ? QuickView : MusicView;
+        var slide = new TranslateTransform();
+        shown.RenderTransform = slide;
+        slide.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(quick ? 24 : -24, 0, TimeSpan.FromMilliseconds(280)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
+        shown.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(220)));
     }
 
     static bool CanStillScroll(DependencyObject element, int delta)

@@ -10,7 +10,20 @@
 </p>
 
 <!-- Demo: record a short screen capture (Win + Alt + R with Xbox Game Bar, or ShareX for a GIF) and save it as docs/demo.gif -->
-<!-- <p align="center"><img src="docs/demo.gif" width="640" alt="ibob demo"></p> -->
+<p align="center">
+  <img src="docs/screenshots/pill.png" width="200" alt="The closed pill: two eyes">
+  &nbsp;
+  <img src="docs/screenshots/pill-alert.png" width="330" alt="The pill showing a meeting alert">
+</p>
+<p align="center">
+  <img src="docs/screenshots/home.png" width="420" alt="Home: now playing">
+  <img src="docs/screenshots/plan.png" width="420" alt="Plan: meetings with Join and tasks with countdowns">
+</p>
+<p align="center">
+  <img src="docs/screenshots/disc.png" width="420" alt="Right-click disc on a shelf file">
+  <img src="docs/screenshots/clipboard.png" width="420" alt="Searchable clipboard history">
+</p>
+<p align="center"><sub>Screenshots use sample data (<code>ibob.exe --screenshots &lt;folder&gt;</code> regenerates them).</sub></p>
 
 ---
 
