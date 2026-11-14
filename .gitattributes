@@ -1,0 +1,5 @@
+# Keep line endings consistent: Windows-style in your working copy, normalised in the repository
+* text=auto
+*.ico binary
+*.png binary
+*.gif binary
