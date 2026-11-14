@@ -21,7 +21,8 @@ namespace Ibob;
 // Turns shelf files into PDFs (single or merged) and Markdown (.md). Results are written into the given folder.
 static class Converters
 {
-    static readonly string[] ImageTypes = { ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".tif", ".tiff" };
+    // HEIC/HEIF (iPhone photos) open only if Windows' "HEIF Image Extensions" is installed.
+    public static readonly string[] ImageTypes = { ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".tif", ".tiff", ".heic", ".heif" };
     static readonly string[] WordTypes = { ".docx", ".doc" };
     static readonly string[] MarkdownSources = { ".pdf", ".docx", ".doc", ".xlsx", ".xlsm", ".txt", ".csv" };
     static readonly XNamespace W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
@@ -32,7 +33,7 @@ static class Converters
     public static string UniquePath(string folder, string name)
     {
         string path = Path.Combine(folder, name);
-        for (int n = 2; File.Exists(path); n++)
+        for (int n = 2; File.Exists(path) || Directory.Exists(path); n++)
             path = Path.Combine(folder, $"{Path.GetFileNameWithoutExtension(name)} ({n}){Path.GetExtension(name)}");
         return path;
     }

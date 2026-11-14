@@ -27,7 +27,7 @@ public partial class MainWindow : Window
     static readonly Brush Gray = new SolidColorBrush(Color.FromRgb(44, 44, 46));
     static readonly Brush Blue = new SolidColorBrush(Color.FromRgb(10, 132, 255));
     const string PlayGlyph = "", PauseGlyph = "";
-    const int MusicIndex = 0, ControlsIndex = 1, NotificationsIndex = 2, ShelfIndex = 3, ClipboardIndex = 4, FocusIndex = 5;
+    const int MusicIndex = 0, TodayIndex = 1, ControlsIndex = 2, NotificationsIndex = 3, ShelfIndex = 4, ClipboardIndex = 5, FocusIndex = 6;
 
     readonly MMDeviceEnumerator devices = new();
     MMDevice speaker, mic;
@@ -63,6 +63,7 @@ public partial class MainWindow : Window
         ConnectToWindows();
         LoadShelf();
         LoadHistory();
+        LoadCalendars();
         SetUpFocus();
         StartNotifications();
     }
@@ -107,6 +108,7 @@ public partial class MainWindow : Window
         ShowMic();
 
         // The heavier checks only run while the panel is open.
+        CheckToday();
         if (isOpen) { RefreshMusic(); RefreshControls(); }
     }
 
@@ -262,6 +264,8 @@ public partial class MainWindow : Window
         MicIcon.Text = muted ? "" : "";
         MicText.Text = muted ? "Mic off" : "Mic on";
         MicButton.Background = muted ? Red : Gray;
+        MeetingMuteText.Text = muted ? "Unmute" : "Mute mic";
+        MeetingMute.Background = muted ? Red : Gray;
     }
 
     // ---------- The little face ----------
@@ -342,7 +346,10 @@ public partial class MainWindow : Window
     void Expand(object sender, MouseEventArgs e)
     {
         if (isOpen) return;
-        Open(alerting ? alertPage : media?.GetCurrentSession() != null ? MusicIndex : ControlsIndex);
+        Open(alerting ? alertPage
+            : MeetingSoon ? TodayIndex
+            : media?.GetCurrentSession() != null ? MusicIndex
+            : ControlsIndex);
     }
 
     void Open(int index)
@@ -363,7 +370,7 @@ public partial class MainWindow : Window
         Animate(84, 22, open: false);
     }
 
-    FrameworkElement[] Pages => new FrameworkElement[] { MusicPage, ControlsPage, NotificationsPage, ShelfPage, ClipboardPage, FocusPage };
+    FrameworkElement[] Pages => new FrameworkElement[] { MusicPage, TodayPage, ControlsPage, NotificationsPage, ShelfPage, ClipboardPage, FocusPage };
 
     // Wheel down → next page, wheel up → previous page.
     void Scrolled(object sender, MouseWheelEventArgs e)

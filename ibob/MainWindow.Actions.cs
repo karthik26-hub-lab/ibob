@@ -27,17 +27,19 @@ public partial class MainWindow
 
     // ---------- The ring: a compact dark disc with icon buttons around the edge ----------
 
-    // Only the actions that make sense for this file type are shown. Glyph "MD" is drawn as text.
-    List<(string Label, string Glyph, Action Run)> ActionsFor(ShelfItem item)
+    // Only the actions that make sense for this file type are shown. Conversions and developer tools
+    // open a second disc, so the first one never gets crowded.
+    List<(string Label, string Glyph, Action Run)> ActionsFor(ShelfItem item, Point center)
     {
         var actions = new List<(string, string, Action)>
         {
             ("Preview", "", () => OpenBoard(item)),
             ("Open", "", () => OpenFile(item)),
         };
-        if (Converters.CanMakePdf(item.Path)) actions.Add(("To PDF", "", () => Convert(item, Converters.ToPdf, "PDF")));
-        if (ImageTypes.Contains(Path.GetExtension(item.Path).ToLowerInvariant())) actions.Add(("Extract text", "Aa", () => ExtractText(item)));
-        if (Converters.CanMakeMarkdown(item.Path)) actions.Add(("To Markdown", "MD", () => Convert(item, Converters.ToMarkdown, "Markdown")));
+        var convert = ConvertActions(item, center);
+        if (convert.Count > 1) actions.Add(("Convert", "", () => ShowRing(item, center, convert, "Convert")));
+        var dev = DevActions(item, center);
+        if (dev.Count > 1) actions.Add(("Dev tools", "{ }", () => ShowRing(item, center, dev, "Dev tools")));
         if (Converters.CanMerge(item.Path) && shelf.Any(other => other != item && Converters.CanMerge(other.Path)))
             actions.Add(("Merge", "", () => StartMerge(item)));
         actions.Add(("Copy", "", () => CopyItem(item)));
@@ -46,38 +48,86 @@ public partial class MainWindow
         return actions;
     }
 
+    // Second disc: turning the file into something else. Starts with a Back button.
+    List<(string, string, Action)> ConvertActions(ShelfItem item, Point center)
+    {
+        var actions = new List<(string, string, Action)> { Back(item, center) };
+        string path = item.Path;
+        if (Converters.CanMakePdf(path)) actions.Add(("To PDF", "", () => Convert(item, Converters.ToPdf, "PDF")));
+        if (Converters.CanMakeMarkdown(path)) actions.Add(("To Markdown", "MD", () => Convert(item, Converters.ToMarkdown, "Markdown")));
+        if (FileTools.IsImage(path))
+        {
+            actions.Add(("Extract text", "Aa", () => ExtractText(item)));
+            if (Path.GetExtension(path).ToLowerInvariant() is not (".jpg" or ".jpeg")) actions.Add(("To JPG", "JPG", () => Convert(item, FileTools.ToJpg, "JPG")));
+            actions.Add(("Shrink image", "", () => Convert(item, FileTools.Shrink, "Smaller image", SizeChange)));
+        }
+        if (FileTools.IsPdf(path))
+        {
+            actions.Add(("Compress PDF", "", () => Convert(item, FileTools.CompressPdf, "Compressed PDF", SizeChange)));
+            actions.Add(("Split pages", "", () => Convert(item, FileTools.SplitPdf, "Pages")));
+        }
+        return actions;
+    }
+
+    // Second disc: developer helpers. Text tools need a text file; a hash works for any file.
+    List<(string, string, Action)> DevActions(ShelfItem item, Point center)
+    {
+        var actions = new List<(string, string, Action)> { Back(item, center) };
+        if (IsTextFile(item.Path))
+        {
+            actions.Add(("Format JSON", "{ }", () => RunTextTool(item, TextTools.FormatJson, "Formatted JSON")));
+            actions.Add(("Minify JSON", "{}", () => RunTextTool(item, TextTools.MinifyJson, "Minified JSON")));
+            actions.Add(("Base64 encode/decode", "64", () => RunTextTool(item, TextTools.Base64, "Base64 result")));
+            actions.Add(("URL encode/decode", "%", () => RunTextTool(item, TextTools.Url, "URL result")));
+            actions.Add(("Decode JWT", "JWT", () => RunTextTool(item, TextTools.Jwt, "Decoded JWT")));
+        }
+        if (File.Exists(item.Path)) actions.Add(("SHA-256 hash", "#", () => RunTool(item, TextTools.Sha256, "SHA-256")));
+        return actions;
+    }
+
+    (string, string, Action) Back(ShelfItem item, Point center) =>
+        ("Back", "", () => ShowRing(item, center, ActionsFor(item, center), null));
+
+    static bool IsTextFile(string path) =>
+        File.Exists(path) && TextTypes.Contains(Path.GetExtension(path).ToLowerInvariant()) && new FileInfo(path).Length < 2_000_000;
+
+    // Centre the disc on the click, but keep it fully inside the pill.
     void ShowRadial(ShelfItem item, Point mouse)
     {
         if (selecting) return;
-        Radial.Children.Clear();
-
-        // Centre the disc on the click, but keep it fully inside the pill.
         var pill = Pill.TranslatePoint(new Point(0, 0), Radial);
         double half = DiscSize / 2 + 4;
         var center = new Point(
             Math.Clamp(mouse.X, pill.X + half, pill.X + Pill.ActualWidth - half),
             Math.Clamp(mouse.Y, pill.Y + half, pill.Y + Pill.ActualHeight - half));
+        ShowRing(item, center, ActionsFor(item, center), null);
+    }
 
+    // Draws a disc of actions. `title` names a sub-disc ("Convert"); the main disc shows the file name instead.
+    void ShowRing(ShelfItem item, Point center, List<(string Label, string Glyph, Action Run)> actions, string title)
+    {
+        Radial.Children.Clear();
         var disc = new Canvas { Width = DiscSize, Height = DiscSize, RenderTransformOrigin = new Point(0.5, 0.5) };
-        // Solid fill and edge only: shadow effects render see-through in the island's transparent window.
+        // Solid fill and edge only: shadow effects render see-through in ibob's transparent window.
         disc.Children.Add(new System.Windows.Shapes.Ellipse { Width = DiscSize, Height = DiscSize, Fill = DiscFill, Stroke = DiscEdge, StrokeThickness = 1 });
 
-        // Centre: the file's icon and name; hovering a button swaps the name for the action's name.
-        var name = new TextBlock { Text = item.Name, FontSize = 10, Foreground = Gray3, TextTrimming = TextTrimming.CharacterEllipsis, TextAlignment = TextAlignment.Center, Width = 74 };
+        // Centre: the file's icon and name (or the sub-disc's title); hovering a button shows the action's name.
+        string resting = title ?? item.Name;
+        Brush restingColor = title == null ? Gray3 : Brushes.White;
+        var name = new TextBlock { Text = resting, FontSize = 10, Foreground = restingColor, TextTrimming = TextTrimming.CharacterEllipsis, TextAlignment = TextAlignment.Center, Width = 74 };
         var middle = new StackPanel { Width = 74 };
         middle.Children.Add(new Image { Source = item.Icon, Width = 26, Height = 26, Margin = new Thickness(0, 0, 0, 4) });
         middle.Children.Add(name);
         Place(middle, DiscSize / 2, DiscSize / 2 - 4, 74, 46);
         disc.Children.Add(middle);
 
-        var actions = ActionsFor(item);
         for (int i = 0; i < actions.Count; i++)
         {
             var (label, glyph, run) = actions[i];
             var button = RingButton(glyph, label == "Remove" ? Red : Brushes.White);
             button.Click += (_, _) => { CloseRadial(); run(); };
             button.MouseEnter += (_, _) => { button.Background = ButtonHover; name.Text = label; name.Foreground = Brushes.White; };
-            button.MouseLeave += (_, _) => { button.Background = Brushes.Transparent; name.Text = item.Name; name.Foreground = Gray3; };
+            button.MouseLeave += (_, _) => { button.Background = Brushes.Transparent; name.Text = resting; name.Foreground = restingColor; };
 
             double angle = -Math.PI / 2 + i * 2 * Math.PI / actions.Count;   // start at the top, go clockwise
             Place(button, DiscSize / 2 + Math.Cos(angle) * ButtonRing, DiscSize / 2 + Math.Sin(angle) * ButtonRing, ButtonSize, ButtonSize);
@@ -96,14 +146,14 @@ public partial class MainWindow
 
     static readonly Brush Gray3 = new SolidColorBrush(Color.FromRgb(142, 142, 147));
 
-    // A round icon button (or "MD" text for Markdown).
+    // A round button: Segoe icons (private-use characters) use the icon font; short labels like "JPG" or "{ }" are bold text.
     Button RingButton(string glyph, Brush color) => new()
     {
         Style = (Style)FindResource("Chip"), Background = Brushes.Transparent, Padding = new Thickness(0),
         Width = ButtonSize, Height = ButtonSize,
-        Content = glyph.Length > 1
-            ? new TextBlock { Text = glyph, FontSize = 11, FontWeight = FontWeights.Bold, Foreground = color }
-            : new TextBlock { Text = glyph, Style = (Style)FindResource("Icon"), FontSize = 15, Foreground = color },
+        Content = glyph[0] >= ''
+            ? new TextBlock { Text = glyph, Style = (Style)FindResource("Icon"), FontSize = 15, Foreground = color }
+            : new TextBlock { Text = glyph, FontSize = glyph.Length > 2 ? 10 : 13, FontWeight = FontWeights.Bold, Foreground = color },
     };
 
     // Positions an element on a canvas by its centre.
@@ -201,16 +251,42 @@ public partial class MainWindow
     }
 
     // Runs a conversion in the background and puts the result on the shelf.
-    async void Convert(ShelfItem item, Func<string, string, string> convert, string what)
+    // `describe` can add detail to the "ready" message, e.g. how much smaller a file got.
+    async void Convert(ShelfItem item, Func<string, string, string> convert, string what, Func<string, string, string> describe = null)
     {
         SetShelfStatus($"Making {what}…");
         try
         {
             Directory.CreateDirectory(ShelfFolder);
             string result = await Converters.RunInBackground(() => convert(item.Path, ShelfFolder));
-            Finished(result, $"{what} ready");
+            Finished(result, describe == null ? $"{what} ready" : describe(item.Path, result));
         }
         catch (Exception e) { SetShelfStatus("Couldn't convert: " + e.GetBaseException().Message); }
+    }
+
+    // "4.2 MB → 1.1 MB"
+    static string SizeChange(string before, string after) => $"{Size(before)} → {Size(after)}";
+
+    static string Size(string path)
+    {
+        double bytes = new FileInfo(path).Length;
+        return bytes >= 1_000_000 ? $"{bytes / 1_000_000:0.0} MB" : $"{bytes / 1000:0} KB";
+    }
+
+    // Developer tools: the result is copied (and kept in clipboard history), not added to the shelf.
+    void RunTextTool(ShelfItem item, Func<string, string> tool, string what) => RunTool(item, path => tool(File.ReadAllText(path)), what);
+
+    void RunTool(ShelfItem item, Func<string, string> tool, string what)
+    {
+        try
+        {
+            string result = tool(item.Path);
+            ignoreClipboardUntil = DateTime.Now.AddSeconds(1);
+            Clipboard.SetText(result);
+            Remember(result);
+            SetShelfStatus($"{what} copied");
+        }
+        catch (Exception e) { SetShelfStatus($"{what}: {e.Message}"); }
     }
 
     // Reads the text in an image (screenshots, photos of slides or notes) with Windows' built-in OCR,

@@ -13,5 +13,7 @@
     <PackageReference Include="PDFsharp" Version="6.1.1" />
     <PackageReference Include="PdfPig" Version="0.1.9" />
     <PackageReference Include="ClosedXML" Version="0.104.2" />
+    <!-- Reads calendar (.ics) feeds for the Today page -->
+    <PackageReference Include="Ical.Net" Version="4.3.1" />
   </ItemGroup>
 </Project>

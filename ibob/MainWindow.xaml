@@ -95,6 +95,11 @@
                 </TextBlock>
                 <Polyline x:Name="Wave" Width="64" Height="22" HorizontalAlignment="Center" Visibility="Collapsed" Stroke="White"
                           StrokeThickness="1.5" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                <!-- Camera (green) and microphone (orange) in use, like a phone's privacy dots -->
+                <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center" Orientation="Horizontal" Margin="9,0,0,0">
+                    <Ellipse x:Name="CameraDot" Width="6" Height="6" Fill="#34C759" Margin="0,0,3,0" Visibility="Collapsed" ToolTip="Camera in use"/>
+                    <Ellipse x:Name="MicDot" Width="6" Height="6" Fill="#FF9F0A" Visibility="Collapsed" ToolTip="Microphone in use"/>
+                </StackPanel>
                 <!-- Focus timer running: a small ring at the right end that shrinks as time runs out -->
                 <Path x:Name="FocusRing" Width="12" Height="12" HorizontalAlignment="Right" Margin="0,0,7,0"
                       StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Visibility="Collapsed"/>
@@ -302,12 +307,66 @@
                     </Grid>
                 </DockPanel>
 
+                <!-- Today: next events with Join buttons, plus a mute button while your mic is in use -->
+                <DockPanel x:Name="TodayPage" Visibility="Collapsed" Height="164">
+                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button x:Name="MeetingMute" Style="{StaticResource Chip}" Padding="12,3" Visibility="Collapsed" Click="ToggleMic">
+                                <TextBlock x:Name="MeetingMuteText" FontSize="11"/>
+                            </Button>
+                            <Button Style="{StaticResource Chip}" Padding="12,3" Margin="6,0,0,0" Click="EditCalendars" ToolTip="Add or change calendar links">
+                                <TextBlock Text="Calendars" FontSize="11"/>
+                            </Button>
+                        </StackPanel>
+                        <TextBlock Text="Today" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="TodayStatus" FontSize="11" Foreground="#FF453A" Margin="10,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                    </DockPanel>
+                    <!-- Calendar links: shown until one is added, or via the Calendars button -->
+                    <StackPanel x:Name="CalendarSetup" DockPanel.Dock="Bottom" Visibility="Collapsed">
+                        <TextBlock FontSize="10" Foreground="#8E8E93" TextWrapping="Wrap"
+                                   Text="Paste your calendar's .ics link (Google Calendar: Settings → your calendar → Secret address in iCal format. Outlook: Settings → Shared calendars → Publish). Separate several with spaces."/>
+                        <DockPanel Margin="0,6,0,0">
+                            <Button Style="{StaticResource Chip}" DockPanel.Dock="Right" Background="#0A84FF" Padding="14,3" Margin="6,0,0,0" Click="SaveCalendars">
+                                <TextBlock Text="Save" FontSize="11"/>
+                            </Button>
+                            <Border CornerRadius="13" Background="#2C2C2E" Padding="10,0" Height="26">
+                                <TextBox x:Name="CalendarLinksBox" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White"
+                                         FontSize="11" VerticalAlignment="Center"/>
+                            </Border>
+                        </DockPanel>
+                    </StackPanel>
+                    <Grid>
+                        <TextBlock x:Name="NoMeetings" FontSize="12" Foreground="#8E8E93" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <ItemsControl x:Name="MeetingList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Height="34" Margin="0,0,0,4">
+                                        <Button DockPanel.Dock="Right" Style="{StaticResource Chip}" Background="#34C759" Padding="14,4"
+                                                Visibility="{Binding JoinVisible}" Click="JoinClicked">
+                                            <TextBlock Text="Join" FontSize="11" FontWeight="SemiBold"/>
+                                        </Button>
+                                        <TextBlock Text="{Binding When}" Width="62" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Text="{Binding Detail}" FontSize="10" Foreground="#8E8E93" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </DockPanel>
+
                 <!-- Page 5: clipboard history -->
                 <DockPanel x:Name="ClipboardPage" Visibility="Collapsed" Height="164">
                     <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
-                        <Button Style="{StaticResource Chip}" DockPanel.Dock="Right" Padding="12,3" Margin="8,0,0,0" Click="ClearHistory"
+                        <Button Style="{StaticResource Chip}" DockPanel.Dock="Right" Padding="12,3" Margin="6,0,0,0" Click="ClearHistory"
                                 ToolTip="Clear history (pinned ones stay)">
                             <TextBlock Text="Clear" FontSize="11"/>
+                        </Button>
+                        <Button Style="{StaticResource Chip}" DockPanel.Dock="Right" Padding="12,3" Margin="8,0,0,0" Click="CopyNewUuid"
+                                ToolTip="Copy a new random UUID">
+                            <TextBlock Text="UUID" FontSize="11"/>
                         </Button>
                         <TextBlock Text="Clipboard" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,12,0"/>
                         <Border CornerRadius="13" Background="#2C2C2E" Padding="10,0" Height="26">
@@ -400,6 +459,7 @@
 
             <!-- Page dots on the right edge, hinting that you can scroll -->
             <StackPanel x:Name="Dots" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,9,0" Visibility="Collapsed">
+                <Ellipse Width="5" Height="5" Fill="White" Margin="0,3"/>
                 <Ellipse Width="5" Height="5" Fill="White" Margin="0,3"/>
                 <Ellipse Width="5" Height="5" Fill="White" Margin="0,3"/>
                 <Ellipse Width="5" Height="5" Fill="White" Margin="0,3"/>

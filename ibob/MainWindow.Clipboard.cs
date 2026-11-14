@@ -102,6 +102,15 @@ public partial class MainWindow
         e.Handled = true;   // don't also copy it
     }
 
+    void CopyNewUuid(object sender, RoutedEventArgs e)
+    {
+        string uuid = TextTools.NewUuid();
+        ignoreClipboardUntil = DateTime.Now.AddSeconds(1);
+        Clipboard.SetText(uuid);
+        Remember(uuid);
+        ClipStatus.Text = "New UUID copied";
+    }
+
     // Clears everything except pinned clips.
     void ClearHistory(object sender, RoutedEventArgs e)
     {

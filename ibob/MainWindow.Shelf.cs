@@ -83,8 +83,13 @@ public partial class MainWindow
     void Forget(ShelfItem item)
     {
         shelf.Remove(item);
-        if (item.Path.StartsWith(ShelfFolder, StringComparison.OrdinalIgnoreCase))
-            try { File.Delete(item.Path); } catch { }
+        if (!item.Path.StartsWith(ShelfFolder, StringComparison.OrdinalIgnoreCase)) return;   // never delete your own files
+        try
+        {
+            if (Directory.Exists(item.Path)) Directory.Delete(item.Path, recursive: true);   // e.g. a split PDF's pages folder
+            else File.Delete(item.Path);
+        }
+        catch { }
     }
 
     void SaveShelf()
