@@ -13,9 +13,6 @@ public partial class MainWindow
 {
     readonly Settings settings = Settings.Load();
 
-    static readonly string[] PageNames = { "Music", "Today", "Tasks", "Notes", "Controls", "Notifications", "Shelf", "Clipboard", "Focus" };
-    public static string[] AllPageNames => PageNames;
-
     double PillWidth => settings.PillDimensions.Width;
     double PillHeight => settings.PillDimensions.Height;
 
@@ -29,8 +26,7 @@ public partial class MainWindow
         Mini.LayoutTransform = new ScaleTransform(scale, scale);
         if (!isOpen && !alerting) SizePill(PillWidth, PillHeight, PillHeight / 2, 200);
 
-        for (int i = 0; i < PageNames.Length; i++)
-            Dots.Children[i].Visibility = PageShown(i) ? Visibility.Visible : Visibility.Collapsed;
+        HighlightTab();   // hides tabs turned off in Settings
 
         ShowAutoState();
         if (!settings.ClipboardHistory) { history.RemoveAll(clip => !clip.Pinned); SaveHistory(); ShowClips(); }
@@ -38,20 +34,20 @@ public partial class MainWindow
         PlaceOnScreen();
     }
 
-    bool PageShown(int index) => !settings.HiddenPages.Contains(PageNames[index]);
+    bool PageShown(int index) => index >= TabCount || !settings.HiddenPages.Contains(TabInfo[index].Name);   // Notifications is always available
 
-    // A hidden page falls back to the nearest shown page (and Controls if everything else is hidden).
+    // A hidden page falls back to the nearest shown page (and Home if everything is hidden).
     int ShownPage(int index)
     {
         if (PageShown(index)) return index;
-        var shown = Enumerable.Range(0, PageNames.Length).Where(PageShown).ToList();
-        return shown.Count == 0 ? ControlsIndex : shown.OrderBy(i => Math.Abs(i - index)).First();
+        var shown = Enumerable.Range(0, TabCount).Where(PageShown).ToList();
+        return shown.Count == 0 ? HomeIndex : shown.OrderBy(i => Math.Abs(i - index)).First();
     }
 
     // Next shown page in the scroll direction (or stay put at the ends).
     int NextShownPage(int from, int step)
     {
-        for (int i = from + step; i >= 0 && i < PageNames.Length; i += step)
+        for (int i = from + step; i >= 0 && i < TabCount; i += step)
             if (PageShown(i)) return i;
         return from;
     }

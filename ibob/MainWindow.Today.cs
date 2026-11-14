@@ -86,35 +86,16 @@ public partial class MainWindow
         }
     }
 
-    // Next three events that haven't ended yet.
+    // The next two events that haven't ended yet, shown above the tasks on the Plan tab.
+    // Calendar links are added in Settings; with none (or nothing coming up) this area simply stays empty.
     void ShowToday()
     {
-        var next = meetings.Where(m => m.End > DateTime.Now).Take(3).ToList();
-        MeetingList.ItemsSource = next;
-        bool linked = CalendarLinks().Count > 0;
-        NoMeetings.Text = linked ? "Nothing coming up this week" : "Add your calendar to see meetings and classes here";
-        NoMeetings.Visibility = next.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        if (!linked) CalendarSetup.Visibility = Visibility.Visible;
+        MeetingList.ItemsSource = meetings.Where(m => m.End > DateTime.Now).Take(2).ToList();
+        TodayStatus.Visibility = TodayStatus.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     void JoinClicked(object sender, RoutedEventArgs e) =>
         Process.Start(new ProcessStartInfo(((Meeting)((FrameworkElement)sender).DataContext).Link) { UseShellExecute = true });
-
-    void EditCalendars(object sender, RoutedEventArgs e)
-    {
-        CalendarLinksBox.Text = string.Join(" ", CalendarLinks());
-        CalendarSetup.Visibility = CalendarSetup.IsVisible ? Visibility.Collapsed : Visibility.Visible;
-        Activate();   // so you can type or paste into the box
-    }
-
-    // Links are separated by spaces; an empty box removes all calendars.
-    void SaveCalendars(object sender, RoutedEventArgs e)
-    {
-        Directory.CreateDirectory(App.DataFolder);
-        File.WriteAllLines(CalendarsFile, CalendarLinksBox.Text.Split(' ', StringSplitOptions.RemoveEmptyEntries));
-        CalendarSetup.Visibility = Visibility.Collapsed;
-        LoadCalendars();
-    }
 
     // Runs every second: refresh the feed now and then, warn before events, update the camera/mic dots.
     void CheckToday()
@@ -126,18 +107,17 @@ public partial class MainWindow
         {
             if (!reminded.Add(m.Title + m.Start)) continue;
             Chime();
-            ShowAlert(null, $"{m.Title} in {Math.Ceiling((m.Start - now).TotalMinutes)} min", TodayIndex);
+            ShowAlert(null, $"{m.Title} in {Math.Ceiling((m.Start - now).TotalMinutes)} min", PlanIndex);
         }
-        if (isOpen && page == TodayIndex && now.Second == 0) ShowToday();   // keep "in 25 min" current
+        if (isOpen && page == PlanIndex && now.Second == 0) ShowToday();   // keep "in 25 min" current
 
         cameraOn = InUse("webcam");
         micInUse = InUse("microphone");
         CameraDot.Visibility = cameraOn ? Visibility.Visible : Visibility.Collapsed;
         MicDot.Visibility = micInUse ? Visibility.Visible : Visibility.Collapsed;
-        MeetingMute.Visibility = micInUse ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    // True while a meeting is about to start or your camera/mic is in use: hovering then opens Today first.
+    // True while a meeting is about to start or your camera/mic is in use: hovering then opens Plan first.
     bool MeetingSoon => cameraOn || micInUse || meetings.Any(m => !m.AllDay && m.Start - DateTime.Now <= TimeSpan.FromMinutes(15) && m.End > DateTime.Now);
 
     // Windows records, per app, when it last started and stopped using the camera or mic.

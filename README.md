@@ -18,20 +18,20 @@
 
 At rest ibob is a small black pill with two eyes that blink and look around. It nods along when music plays,
 shows a thin line that follows your voice in calls, and a green / orange dot while your camera / mic is on.
-Hover it and it springs open; scroll the mouse wheel to move between pages.
+Hover it and it springs open, with a row of tabs along the top: click one to jump straight to it
+(or scroll the mouse wheel to move through them).
 
-| Page | What's on it |
+| Tab | What's on it |
 |---|---|
-| **Music** | Artwork, title, a draggable seek bar and play / pause / skip for whatever is playing (Spotify, YouTube in the browser, ...) |
-| **Today** | Your next meetings and classes from a calendar link, with a **Join** button for Teams / Zoom / Meet and a heads-up 10 minutes before |
-| **Tasks** | Type `DBMS assignment fri 5pm` and it becomes a task with a live countdown (orange within a day, red when overdue) and reminders |
+| **Home** | What's playing (artwork, seek bar, play / pause / skip), volume, brightness, Wi-Fi, Bluetooth and mic mute |
+| **Plan** | Your next meetings and classes from a calendar link, with a **Join** button for Teams / Zoom / Meet, and your tasks: type `DBMS assignment fri 5pm` and it gets a live countdown and reminders |
 | **Notes** | A quick notepad that saves as you type |
-| **Controls** | Clock, battery, volume, brightness, Wi-Fi, Bluetooth and mic mute |
-| **Notifications** | Your latest Windows notifications; new ones flash in the pill |
 | **Shelf** | Anything you copy or drop on ibob (files, images, screenshots, text) waits here to be dragged out later |
 | **Clipboard** | Searchable history of copied text, with pins for things you reuse |
 | **Focus** | Pomodoro timer with a progress ring in the pill |
 
+The time, battery and a **bell** for your Windows notifications (with a count) sit at the right of the tab bar.
+Tabs you don't use can be hidden in Settings (right-click the pill).
 ### Right-click anything on the shelf
 
 A small disc of actions pops up around the cursor:

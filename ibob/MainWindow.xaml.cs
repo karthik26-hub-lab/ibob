@@ -27,8 +27,8 @@ public partial class MainWindow : Window
     static readonly Brush Gray = new SolidColorBrush(Color.FromRgb(44, 44, 46));
     static readonly Brush Blue = new SolidColorBrush(Color.FromRgb(10, 132, 255));
     const string PlayGlyph = "", PauseGlyph = "";
-    const int MusicIndex = 0, TodayIndex = 1, TasksIndex = 2, NotesIndex = 3, ControlsIndex = 4,
-              NotificationsIndex = 5, ShelfIndex = 6, ClipboardIndex = 7, FocusIndex = 8;
+    // Tabs, in the order they appear in the tab bar. Notifications has no tab: it opens from the bell.
+    const int HomeIndex = 0, PlanIndex = 1, NotesIndex = 2, ShelfIndex = 3, ClipboardIndex = 4, FocusIndex = 5, NotificationsIndex = 6;
 
     readonly MMDeviceEnumerator devices = new();
     MMDevice speaker, mic;
@@ -46,6 +46,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        BuildTabs();
         SourceInitialized += (_, _) => { HideFromAltTab(); WatchClipboard(); ApplySettings(); };
         // Monitors plugged in/out or resolution changed: move back to the top centre of the chosen screen.
         Microsoft.Win32.SystemEvents.DisplaySettingsChanged += (_, _) => Dispatcher.Invoke(PlaceOnScreen);
@@ -90,13 +91,13 @@ public partial class MainWindow : Window
 
         var now = DateTime.Now;
         BigTime.Text = now.ToString("h:mm");
-        Date.Text = now.ToString("dddd, d MMMM");
+        BigTime.ToolTip = now.ToString("dddd, d MMMM");
 
         var power = Forms.SystemInformation.PowerStatus;
         int percent = (int)Math.Round(power.BatteryLifePercent * 100);
         bool charging = power.PowerLineStatus == Forms.PowerLineStatus.Online;
         BigBattery.Text = (charging ? "⚡ " : "") + percent + "%";
-        BatteryState.Text = charging ? "Charging"
+        BigBattery.ToolTip = charging ? "Charging"
             : power.BatteryLifeRemaining > 0 ? TimeSpan.FromSeconds(power.BatteryLifeRemaining).ToString(@"h\h\ mm\m") + " left"
             : "On battery";
         BigBattery.Foreground = percent <= 20 && !charging ? Red : Green;
@@ -268,8 +269,6 @@ public partial class MainWindow : Window
         MicIcon.Text = muted ? "" : "";
         MicText.Text = muted ? "Mic off" : "Mic on";
         MicButton.Background = muted ? Red : Gray;
-        MeetingMuteText.Text = muted ? "Unmute" : "Mute mic";
-        MeetingMute.Background = muted ? Red : Gray;
     }
 
     // ---------- The little face ----------
@@ -346,21 +345,20 @@ public partial class MainWindow : Window
 
     // ---------- Opening, closing and paging ----------
 
-    // Opens on: the notifications page if one just popped up, else music if something is playing, else controls.
+    // Opens on: the page an alert points to if one is showing, Plan if a meeting is near, otherwise Home.
     void Expand(object sender, MouseEventArgs e)
     {
         if (isOpen) return;
         Open(alerting ? alertPage
-            : MeetingSoon ? TodayIndex
-            : media?.GetCurrentSession() != null ? MusicIndex
-            : ControlsIndex);
+            : MeetingSoon ? PlanIndex
+            : HomeIndex);
     }
 
     void Open(int index)
     {
         alerting = false;
         alertTimer.Stop();
-        Animate(420, 200, open: true);
+        Animate(420, OpenHeight, open: true);
         RefreshMusic();
         RefreshControls();
         _ = ShowNotifications();
@@ -374,36 +372,6 @@ public partial class MainWindow : Window
         Animate(PillWidth, PillHeight, open: false);
     }
 
-    FrameworkElement[] Pages => new FrameworkElement[]
-        { MusicPage, TodayPage, TasksPage, NotesPage, ControlsPage, NotificationsPage, ShelfPage, ClipboardPage, FocusPage };
-
-    // Wheel down → next page, wheel up → previous page.
-    void Scrolled(object sender, MouseWheelEventArgs e)
-    {
-        int next = NextShownPage(page, e.Delta < 0 ? 1 : -1);   // skips pages hidden in Settings
-        if (isOpen && !boardOpen && next != page) ShowPage(next);
-    }
-
-    // Slides the chosen page in from the direction you scrolled.
-    void ShowPage(int index)
-    {
-        index = ShownPage(index);
-        double from = index > page ? 30 : -30;
-        page = index;
-        var pages = Pages;
-        for (int i = 0; i < pages.Length; i++)
-        {
-            pages[i].Visibility = i == page ? Visibility.Visible : Visibility.Collapsed;
-            Dots.Children[i].Opacity = i == page ? 1 : 0.3;
-        }
-
-        var shown = pages[page];
-        var slide = new TranslateTransform();
-        shown.RenderTransform = slide;
-        slide.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(from, 0, TimeSpan.FromMilliseconds(300)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
-        shown.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(250)));
-    }
-
     // Springy grow/shrink of the pill, swapping the mini face for the full panel.
     void Animate(double width, double height, bool open)
     {
@@ -412,7 +380,7 @@ public partial class MainWindow : Window
         SizePill(width, height, open ? 28 : height / 2, open ? 380 : 220);
 
         Mini.Visibility = open ? Visibility.Collapsed : Visibility.Visible;
-        Big.Visibility = Dots.Visibility = open ? Visibility.Visible : Visibility.Collapsed;
+        Big.Visibility = open ? Visibility.Visible : Visibility.Collapsed;
         var fade = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(250)) { BeginTime = TimeSpan.FromMilliseconds(80) };
         (open ? Big : (UIElement)Mini).BeginAnimation(OpacityProperty, fade);
     }

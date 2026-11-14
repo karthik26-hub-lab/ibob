@@ -67,7 +67,7 @@
     <Grid>
     <Border x:Name="Pill" Width="84" Height="22" CornerRadius="11" Background="Black"
             VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,4,0,0" ClipToBounds="True"
-            MouseEnter="Expand" MouseLeave="Collapse" MouseWheel="Scrolled"
+            MouseEnter="Expand" MouseLeave="Collapse" PreviewMouseWheel="Scrolled"
             AllowDrop="True" DragEnter="FilesDragOver" DragOver="FilesDragOver" DragLeave="FilesDragLeave" Drop="FilesDropped">
         <Border.ContextMenu>
             <ContextMenu>
@@ -112,64 +112,70 @@
                 </StackPanel>
             </Grid>
 
-            <!-- Expanded: two pages, switched with the mouse wheel -->
-            <Grid x:Name="Big" Width="376" Margin="22,18" Opacity="0" Visibility="Collapsed" HorizontalAlignment="Left" VerticalAlignment="Top">
+            <!-- Expanded: a tab bar on top (one click to any page), the chosen page below -->
+            <DockPanel x:Name="Big" Width="376" Margin="22,14" Opacity="0" Visibility="Collapsed" HorizontalAlignment="Left" VerticalAlignment="Top">
 
-                <!-- Page 1: now playing -->
-                <StackPanel x:Name="MusicPage">
-                    <DockPanel>
-                        <Border x:Name="Art" Width="64" Height="64" CornerRadius="12" Background="#2C2C2E" Margin="0,0,14,0">
-                            <TextBlock x:Name="ArtIcon" Style="{StaticResource Icon}" Text="&#xE8D6;" FontSize="24" Foreground="#8E8E93" HorizontalAlignment="Center"/>
+                <DockPanel x:Name="TabBar" DockPanel.Dock="Top" Height="28" Margin="0,0,0,10">
+                    <!-- Right side: notifications bell (with a count), time, battery -->
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button x:Name="BellButton" Style="{StaticResource Chip}" Background="Transparent" Width="32" Height="28" Padding="0"
+                                Click="BellClicked" ToolTip="Notifications">
+                            <Grid>
+                                <TextBlock x:Name="BellIcon" Style="{StaticResource Icon}" FontSize="14" Text="&#xEA8F;" Foreground="#8E8E93"/>
+                                <Border x:Name="BellBadge" MinWidth="14" Height="14" CornerRadius="7" Background="#FF453A" Padding="3,0"
+                                        HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-6,-9,0" Visibility="Collapsed">
+                                    <TextBlock x:Name="BellCount" FontSize="9" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </Grid>
+                        </Button>
+                        <TextBlock x:Name="BigTime" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0,10,0"/>
+                        <TextBlock x:Name="BigBattery" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <!-- Left side: one icon button per page, built in code (see MainWindow.Tabs.cs) -->
+                    <StackPanel x:Name="Tabs" Orientation="Horizontal"/>
+                </DockPanel>
+
+                <Grid>
+                <!-- Home: what's playing, volume, brightness, Wi-Fi / Bluetooth / mic -->
+                <StackPanel x:Name="HomePage" Height="164">
+                    <DockPanel Height="44">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Style="{StaticResource Chip}" Background="Transparent" Padding="8" Click="PreviousSong">
+                                <TextBlock Style="{StaticResource Icon}" FontSize="15" Text="&#xE892;"/>
+                            </Button>
+                            <Button Style="{StaticResource Chip}" Background="White" Foreground="Black" Width="34" Height="34" Padding="0" Margin="4,0" Click="PlayPause">
+                                <TextBlock x:Name="PlayIcon" Style="{StaticResource Icon}" FontSize="15"/>
+                            </Button>
+                            <Button Style="{StaticResource Chip}" Background="Transparent" Padding="8" Click="NextSong">
+                                <TextBlock Style="{StaticResource Icon}" FontSize="15" Text="&#xE893;"/>
+                            </Button>
+                        </StackPanel>
+                        <Border x:Name="Art" Width="44" Height="44" CornerRadius="10" Background="#2C2C2E" Margin="0,0,12,0">
+                            <TextBlock x:Name="ArtIcon" Style="{StaticResource Icon}" Text="&#xE8D6;" FontSize="18" Foreground="#8E8E93" HorizontalAlignment="Center"/>
                         </Border>
                         <StackPanel VerticalAlignment="Center">
-                            <TextBlock x:Name="SongTitle" FontSize="15" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-                            <TextBlock x:Name="SongArtist" FontSize="12" Foreground="#8E8E93" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+                            <TextBlock x:Name="SongTitle" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="SongArtist" FontSize="11" Foreground="#8E8E93" TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
                     </DockPanel>
-                    <Slider x:Name="Seek" Style="{StaticResource Bar}" Margin="0,14,0,0" ValueChanged="SeekMoved" PreviewMouseLeftButtonUp="SeekReleased"/>
-                    <DockPanel>
-                        <TextBlock x:Name="Total" DockPanel.Dock="Right" FontSize="11" Foreground="#8E8E93"/>
-                        <TextBlock x:Name="Elapsed" FontSize="11" Foreground="#8E8E93"/>
-                    </DockPanel>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2,0,0">
-                        <Button Style="{StaticResource Chip}" Background="Transparent" Padding="10" Click="PreviousSong">
-                            <TextBlock Style="{StaticResource Icon}" FontSize="18" Text="&#xE892;"/>
-                        </Button>
-                        <Button Style="{StaticResource Chip}" Background="White" Foreground="Black" Width="44" Height="44" Padding="0" Margin="20,0" Click="PlayPause">
-                            <TextBlock x:Name="PlayIcon" Style="{StaticResource Icon}" FontSize="18"/>
-                        </Button>
-                        <Button Style="{StaticResource Chip}" Background="Transparent" Padding="10" Click="NextSong">
-                            <TextBlock Style="{StaticResource Icon}" FontSize="18" Text="&#xE893;"/>
-                        </Button>
-                    </StackPanel>
-                </StackPanel>
-
-                <!-- Page 2: clock, battery, volume, brightness, toggles -->
-                <StackPanel x:Name="ControlsPage" Visibility="Collapsed">
-                    <DockPanel>
-                        <StackPanel DockPanel.Dock="Right" HorizontalAlignment="Right">
-                            <TextBlock x:Name="BigBattery" FontSize="26" FontWeight="SemiBold" HorizontalAlignment="Right"/>
-                            <TextBlock x:Name="BatteryState" FontSize="12" Foreground="#8E8E93" HorizontalAlignment="Right"/>
-                        </StackPanel>
-                        <StackPanel>
-                            <TextBlock x:Name="BigTime" FontSize="26" FontWeight="SemiBold"/>
-                            <TextBlock x:Name="Date" FontSize="12" Foreground="#8E8E93"/>
-                        </StackPanel>
+                    <DockPanel Margin="0,4,0,0">
+                        <TextBlock x:Name="Elapsed" Width="40" FontSize="10" Foreground="#8E8E93" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="Total" DockPanel.Dock="Right" Width="40" TextAlignment="Right" FontSize="10" Foreground="#8E8E93" VerticalAlignment="Center"/>
+                        <Slider x:Name="Seek" Style="{StaticResource Bar}" ValueChanged="SeekMoved" PreviewMouseLeftButtonUp="SeekReleased"/>
                     </DockPanel>
 
-                    <DockPanel Margin="0,14,0,0">
-                        <TextBlock Style="{StaticResource Icon}" Text="&#xE767;" Margin="0,0,12,0"/>
-                        <TextBlock x:Name="VolumeText" DockPanel.Dock="Right" Width="38" TextAlignment="Right" FontSize="12" Foreground="#8E8E93" VerticalAlignment="Center"/>
+                    <DockPanel Margin="0,8,0,0">
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE767;" Width="28"/>
+                        <TextBlock x:Name="VolumeText" DockPanel.Dock="Right" Width="40" TextAlignment="Right" FontSize="11" Foreground="#8E8E93" VerticalAlignment="Center"/>
                         <Slider x:Name="Volume" Style="{StaticResource Bar}" ValueChanged="VolumeChanged"/>
                     </DockPanel>
-
-                    <DockPanel x:Name="BrightnessRow" Margin="0,6,0,0">
-                        <TextBlock Style="{StaticResource Icon}" Text="&#xE706;" Margin="0,0,12,0"/>
-                        <TextBlock x:Name="BrightnessText" DockPanel.Dock="Right" Width="38" TextAlignment="Right" FontSize="12" Foreground="#8E8E93" VerticalAlignment="Center"/>
+                    <DockPanel x:Name="BrightnessRow" Margin="0,2,0,0">
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE706;" Width="28"/>
+                        <TextBlock x:Name="BrightnessText" DockPanel.Dock="Right" Width="40" TextAlignment="Right" FontSize="11" Foreground="#8E8E93" VerticalAlignment="Center"/>
                         <Slider x:Name="Brightness" Style="{StaticResource Bar}" ValueChanged="BrightnessChanged"/>
                     </DockPanel>
 
-                    <UniformGrid Columns="3" Margin="-4,14,-4,0">
+                    <UniformGrid Columns="3" Margin="-4,8,-4,0">
                         <Button x:Name="WifiButton" Style="{StaticResource Chip}" Margin="4,0" Click="ToggleWifi">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Style="{StaticResource Icon}" FontSize="14" Text="&#xE701;" Margin="0,0,8,0"/>
@@ -190,6 +196,7 @@
                         </Button>
                     </UniformGrid>
                 </StackPanel>
+
 
                 <!-- Page 3: notifications -->
                 <DockPanel x:Name="NotificationsPage" Visibility="Collapsed" Height="164">
@@ -309,63 +316,13 @@
                     </Grid>
                 </DockPanel>
 
-                <!-- Today: next events with Join buttons, plus a mute button while your mic is in use -->
-                <DockPanel x:Name="TodayPage" Visibility="Collapsed" Height="164">
-                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
-                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                            <Button x:Name="MeetingMute" Style="{StaticResource Chip}" Padding="12,3" Visibility="Collapsed" Click="ToggleMic">
-                                <TextBlock x:Name="MeetingMuteText" FontSize="11"/>
-                            </Button>
-                            <Button Style="{StaticResource Chip}" Padding="12,3" Margin="6,0,0,0" Click="EditCalendars" ToolTip="Add or change calendar links">
-                                <TextBlock Text="Calendars" FontSize="11"/>
-                            </Button>
-                        </StackPanel>
-                        <TextBlock Text="Today" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="TodayStatus" FontSize="11" Foreground="#FF453A" Margin="10,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                    </DockPanel>
-                    <!-- Calendar links: shown until one is added, or via the Calendars button -->
-                    <StackPanel x:Name="CalendarSetup" DockPanel.Dock="Bottom" Visibility="Collapsed">
-                        <TextBlock FontSize="10" Foreground="#8E8E93" TextWrapping="Wrap"
-                                   Text="Paste your calendar's .ics link (Google Calendar: Settings → your calendar → Secret address in iCal format. Outlook: Settings → Shared calendars → Publish). Separate several with spaces."/>
-                        <DockPanel Margin="0,6,0,0">
-                            <Button Style="{StaticResource Chip}" DockPanel.Dock="Right" Background="#0A84FF" Padding="14,3" Margin="6,0,0,0" Click="SaveCalendars">
-                                <TextBlock Text="Save" FontSize="11"/>
-                            </Button>
-                            <Border CornerRadius="13" Background="#2C2C2E" Padding="10,0" Height="26">
-                                <TextBox x:Name="CalendarLinksBox" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White"
-                                         FontSize="11" VerticalAlignment="Center"/>
-                            </Border>
-                        </DockPanel>
-                    </StackPanel>
-                    <Grid>
-                        <TextBlock x:Name="NoMeetings" FontSize="12" Foreground="#8E8E93" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        <ItemsControl x:Name="MeetingList">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <DockPanel Height="34" Margin="0,0,0,4">
-                                        <Button DockPanel.Dock="Right" Style="{StaticResource Chip}" Background="#34C759" Padding="14,4"
-                                                Visibility="{Binding JoinVisible}" Click="JoinClicked">
-                                            <TextBlock Text="Join" FontSize="11" FontWeight="SemiBold"/>
-                                        </Button>
-                                        <TextBlock Text="{Binding When}" Width="62" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock Text="{Binding Detail}" FontSize="10" Foreground="#8E8E93" TextTrimming="CharacterEllipsis"/>
-                                        </StackPanel>
-                                    </DockPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </Grid>
-                </DockPanel>
-
-                <!-- Tasks: to-do list with due-date countdowns -->
-                <DockPanel x:Name="TasksPage" Visibility="Collapsed" Height="164">
-                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
-                        <Button Style="{StaticResource Chip}" DockPanel.Dock="Right" Padding="12,3" Margin="8,0,0,0" Click="ClearDoneTasks">
+                <!-- Plan: add a task, your next meetings (with Join), then your tasks with countdowns -->
+                <DockPanel x:Name="PlanPage" Visibility="Collapsed" Height="164">
+                    <DockPanel DockPanel.Dock="Top">
+                        <Button Style="{StaticResource Chip}" DockPanel.Dock="Right" Padding="12,3" Margin="8,0,0,0" Click="ClearDoneTasks"
+                                ToolTip="Remove finished tasks">
                             <TextBlock Text="Clear done" FontSize="11"/>
                         </Button>
-                        <TextBlock Text="Tasks" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,12,0"/>
                         <Border CornerRadius="13" Background="#2C2C2E" Padding="10,0" Height="26">
                             <Grid>
                                 <TextBlock x:Name="TaskHint" Text="Add a task, e.g. DBMS assignment fri 5pm" FontSize="12" Foreground="#8E8E93"
@@ -375,15 +332,40 @@
                             </Grid>
                         </Border>
                     </DockPanel>
-                    <Grid>
-                        <TextBlock x:Name="NoTasks" FontSize="12" Foreground="#8E8E93" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"
-                                   Text="Nothing to do. Type a task above and press Enter.&#x0a;Add a day or time at the end for a countdown."/>
+
+                    <!-- Next two events from your calendars (added in Settings); hidden when there are none -->
+                    <StackPanel DockPanel.Dock="Top" Margin="0,6,0,0">
+                        <TextBlock x:Name="TodayStatus" FontSize="10" Foreground="#FF453A" TextTrimming="CharacterEllipsis" Visibility="Collapsed"/>
+                        <ItemsControl x:Name="MeetingList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border CornerRadius="8" Background="#1C1C1E" Padding="8,0" Height="28" Margin="0,0,0,3">
+                                        <DockPanel>
+                                            <Button DockPanel.Dock="Right" Style="{StaticResource Chip}" Background="#34C759" Padding="12,2"
+                                                    VerticalAlignment="Center" Visibility="{Binding JoinVisible}" Click="JoinClicked">
+                                                <TextBlock Text="Join" FontSize="10" FontWeight="SemiBold"/>
+                                            </Button>
+                                            <TextBlock Style="{StaticResource Icon}" Text="&#xE787;" FontSize="11" Foreground="#0A84FF" Margin="0,0,8,0"/>
+                                            <TextBlock Text="{Binding When}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                            <TextBlock FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                                                <Run Text="{Binding Title, Mode=OneWay}"/><Run Text=" · " Foreground="#8E8E93"/><Run Text="{Binding Detail, Mode=OneWay}" Foreground="#8E8E93"/>
+                                            </TextBlock>
+                                        </DockPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <Grid Margin="0,4,0,0">
+                        <TextBlock x:Name="NoTasks" FontSize="11" Foreground="#8E8E93" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"
+                                   Text="No tasks. Type one above and press Enter;&#x0a;a day or time at the end adds a countdown."/>
                         <ScrollViewer VerticalScrollBarVisibility="Hidden">
                             <ItemsControl x:Name="TaskList">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <DockPanel Height="27" Opacity="{Binding Fade}">
-                                            <TextBlock DockPanel.Dock="Left" Text="{Binding Check}" Style="{StaticResource Icon}" FontSize="15" Width="24"
+                                        <DockPanel Height="26" Opacity="{Binding Fade}">
+                                            <TextBlock DockPanel.Dock="Left" Text="{Binding Check}" Style="{StaticResource Icon}" FontSize="14" Width="24"
                                                        Background="Transparent" Cursor="Hand" ToolTip="Done / not done" MouseLeftButtonUp="TaskToggle"/>
                                             <TextBlock DockPanel.Dock="Right" Text="&#xE711;" Style="{StaticResource Icon}" FontSize="10" Foreground="#8E8E93"
                                                        Padding="6" Background="Transparent" Cursor="Hand" ToolTip="Delete" MouseLeftButtonUp="TaskDelete"/>
@@ -398,6 +380,7 @@
                         </ScrollViewer>
                     </Grid>
                 </DockPanel>
+
 
                 <!-- Notes: a notepad that saves as you type -->
                 <DockPanel x:Name="NotesPage" Visibility="Collapsed" Height="164">
@@ -490,7 +473,8 @@
                         </Button>
                     </StackPanel>
                 </StackPanel>
-            </Grid>
+                </Grid>
+            </DockPanel>
 
             <!-- Preview board: right-click a shelf item to see it big -->
             <DockPanel x:Name="Board" Visibility="Collapsed" Opacity="0" Margin="20,16">
@@ -520,18 +504,6 @@
                 </Grid>
             </DockPanel>
 
-            <!-- Page dots on the right edge, hinting that you can scroll -->
-            <StackPanel x:Name="Dots" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,9,0" Visibility="Collapsed">
-                <Ellipse Width="5" Height="5" Fill="White" Margin="0,3"/>
-                <Ellipse Width="5" Height="5" Fill="White" Margin="0,3"/>
-                <Ellipse Width="5" Height="5" Fill="White" Margin="0,3"/>
-                <Ellipse Width="5" Height="5" Fill="White" Margin="0,3"/>
-                <Ellipse Width="5" Height="5" Fill="White" Margin="0,3"/>
-                <Ellipse Width="5" Height="5" Fill="White" Margin="0,3"/>
-                <Ellipse Width="5" Height="5" Fill="White" Margin="0,3"/>
-                <Ellipse Width="5" Height="5" Fill="White" Margin="0,3"/>
-                <Ellipse Width="5" Height="5" Fill="White" Margin="0,3"/>
-            </StackPanel>
         </Grid>
     </Border>
 

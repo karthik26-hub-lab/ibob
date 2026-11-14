@@ -36,7 +36,7 @@ public partial class MainWindow
         boardItem = item;
         boardOpen = true;
         BoardTitle.Text = item.Name;
-        Big.Visibility = Dots.Visibility = Visibility.Collapsed;
+        Big.Visibility = Visibility.Collapsed;
         Board.Visibility = Visibility.Visible;
         Board.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(250)) { BeginTime = TimeSpan.FromMilliseconds(80) });
         SizePill(560, 400, 28, 380);
@@ -122,8 +122,8 @@ public partial class MainWindow
     void CloseBoard(object sender, RoutedEventArgs e)
     {
         HideBoard();
-        Big.Visibility = Dots.Visibility = Visibility.Visible;
-        SizePill(420, 200, 28, 300);
+        Big.Visibility = Visibility.Visible;
+        SizePill(420, OpenHeight, 28, 300);
         ShowPage(ShelfIndex);
     }
 

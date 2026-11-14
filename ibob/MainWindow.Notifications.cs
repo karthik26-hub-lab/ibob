@@ -69,6 +69,7 @@ public partial class MainWindow
         var notes = new List<Note>();
         foreach (var n in all.OrderByDescending(n => n.CreationTime).Take(3)) notes.Add(await ToNote(n));
         NotificationList.ItemsSource = notes;
+        ShowBadge(all.Count);
         NoNotifications.Visibility = notes.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 

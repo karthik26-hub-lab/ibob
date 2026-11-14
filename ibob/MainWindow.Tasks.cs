@@ -101,13 +101,13 @@ public partial class MainWindow
             else if (left <= TimeSpan.Zero && left > TimeSpan.FromMinutes(-1) && taskReminders.Add("due" + task.Created))
                 Remind($"{task.Text} · due now");
         }
-        if (isOpen && page == TasksIndex && now.Second == 0) ShowTasks();
+        if (isOpen && page == PlanIndex && now.Second == 0) ShowTasks();
     }
 
     void Remind(string text)
     {
         Chime();
-        ShowAlert(null, text, TasksIndex);
+        ShowAlert(null, text, PlanIndex);
     }
 
     // ---------- Notes ----------
