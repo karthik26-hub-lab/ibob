@@ -13,6 +13,25 @@ public partial class App : System.Windows.Application
 
     static readonly string ErrorLog = Path.Combine(DataFolder, "errors.log");
 
+    static System.Threading.Mutex oneCopy;   // held while ibob runs, so a second launch just exits
+
+    // ibob.exe --uninstall   : remove ibob (Settings → Apps uses this); add --quiet to skip the questions
+    // ibob.exe --install     : install without asking (single-file release only)
+    protected override void OnStartup(System.Windows.StartupEventArgs e)
+    {
+        base.OnStartup(e);
+        bool ask = !e.Args.Contains("--quiet");
+        if (e.Args.Contains("--uninstall")) { Installer.Uninstall(ask); Shutdown(); return; }
+        if (Installer.OfferInstall(ask: !e.Args.Contains("--install"))) { Shutdown(); return; }
+
+        oneCopy = new System.Threading.Mutex(true, "ibob-one-copy", out bool first);
+        if (!first) { Shutdown(); return; }   // ibob is already running
+
+        ShutdownMode = System.Windows.ShutdownMode.OnMainWindowClose;   // closing the pill closes Settings too
+        MainWindow = new MainWindow();
+        MainWindow.Show();
+    }
+
     public App()
     {
         MoveOldData();

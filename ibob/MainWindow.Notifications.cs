@@ -113,7 +113,7 @@ public partial class MainWindow
         alertTimer.Stop();
         if (!alerting) return;
         alerting = false;
-        if (!isOpen) SizePill(84, 22, 11, 220);
+        if (!isOpen) SizePill(PillWidth, PillHeight, PillHeight / 2, 220);
     }
 
     // Windows doesn't let this app clear everything at once, so remove them one by one.

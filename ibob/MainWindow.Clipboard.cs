@@ -45,7 +45,7 @@ public partial class MainWindow
     // Newest copy goes first; copying the same text again just moves it up.
     void Remember(string text)
     {
-        if (string.IsNullOrWhiteSpace(text)) return;
+        if (string.IsNullOrWhiteSpace(text) || !settings.ClipboardHistory) return;
         var existing = history.FirstOrDefault(clip => clip.Text == text);
         history.Remove(existing);
         history.Insert(0, new Clip { Text = text, Pinned = existing?.Pinned ?? false, Time = DateTime.Now });

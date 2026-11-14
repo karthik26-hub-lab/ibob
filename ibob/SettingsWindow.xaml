@@ -1,0 +1,93 @@
+<Window x:Class="Ibob.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ibob Settings" Icon="ibob.ico" Width="480" Height="680" WindowStartupLocation="CenterScreen" ResizeMode="CanMinimize"
+        Background="#1C1C1E" Foreground="White" FontFamily="Segoe UI Variable Display, Segoe UI" FontSize="13">
+
+    <Window.Resources>
+        <Style x:Key="Section" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#8E8E93"/>
+            <Setter Property="Margin" Value="0,22,0,8"/>
+        </Style>
+        <Style x:Key="Note" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="#8E8E93"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,4,0,0"/>
+        </Style>
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="0,4"/>
+        </Style>
+        <Style TargetType="RadioButton">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="0,4,18,4"/>
+        </Style>
+        <!-- Rounded dark buttons, like the island's chips -->
+        <Style TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#2C2C2E"/>
+            <Setter Property="Padding" Value="14,6"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="14" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="26,10,26,26">
+            <TextBlock Text="ibob" FontSize="28" FontWeight="SemiBold" Margin="0,10,0,0"/>
+            <TextBlock x:Name="VersionText" Style="{StaticResource Note}"/>
+
+            <TextBlock Style="{StaticResource Section}" Text="GENERAL"/>
+            <CheckBox x:Name="StartWithWindows" Content="Start ibob when I sign in to Windows"/>
+            <CheckBox x:Name="Sounds" Content="Play a sound for reminders and timers"/>
+            <TextBlock Text="Pill size" Margin="0,12,0,2"/>
+            <StackPanel x:Name="SizeChoices" Orientation="Horizontal"/>
+            <TextBlock Text="Show ibob on" Margin="0,12,0,2"/>
+            <StackPanel x:Name="ScreenChoices"/>
+
+            <TextBlock Style="{StaticResource Section}" Text="PAGES"/>
+            <TextBlock Style="{StaticResource Note}" Text="Untick pages you don't use; scrolling skips them." Margin="0,-4,0,6"/>
+            <WrapPanel x:Name="PageChoices"/>
+
+            <TextBlock Style="{StaticResource Section}" Text="SHELF AND CLIPBOARD"/>
+            <CheckBox x:Name="AutoShelf" Content="Put copied files, images and screenshots on the shelf"/>
+            <CheckBox x:Name="TextToShelf" Content="Put copied text on the shelf too"/>
+            <CheckBox x:Name="ClipboardHistory" Content="Keep a searchable history of copied text"/>
+            <TextBlock Style="{StaticResource Note}" Text="Copies from password managers are always skipped. Turning history off clears it (pinned items stay)."/>
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                <Button Content="Clear clipboard history" Click="ClearHistory"/>
+                <Button Content="Clear shelf" Click="ClearShelf"/>
+            </StackPanel>
+
+            <TextBlock Style="{StaticResource Section}" Text="CALENDARS"/>
+            <TextBlock Style="{StaticResource Note}" Margin="0,-4,0,6"
+                       Text="Calendar .ics links, one per line. Google Calendar: Settings → your calendar → Secret address in iCal format. Outlook: Settings → Shared calendars → Publish."/>
+            <TextBox x:Name="Calendars" Height="66" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                     Background="#2C2C2E" Foreground="White" CaretBrush="White" BorderThickness="0" Padding="8" FontSize="12"/>
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                <Button Content="Save calendars" Click="SaveCalendars"/>
+                <TextBlock x:Name="CalendarsSaved" Style="{StaticResource Note}" VerticalAlignment="Center" Margin="4,0,0,0"/>
+            </StackPanel>
+
+            <TextBlock Style="{StaticResource Section}" Text="YOUR DATA"/>
+            <TextBlock Style="{StaticResource Note}" Margin="0,-4,0,0"
+                       Text="Everything stays on this computer. Shelf files, notes, tasks, history and settings are kept in your user folder; calendar links are only used to download your own calendars."/>
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                <Button Content="Open data folder" Click="OpenDataFolder"/>
+                <Button x:Name="UninstallButton" Content="Uninstall ibob" Click="Uninstall"/>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</Window>

@@ -71,6 +71,8 @@
             AllowDrop="True" DragEnter="FilesDragOver" DragOver="FilesDragOver" DragLeave="FilesDragLeave" Drop="FilesDropped">
         <Border.ContextMenu>
             <ContextMenu>
+                <MenuItem Header="Settings…" Click="OpenSettings"/>
+                <Separator/>
                 <MenuItem Header="Close ibob" Click="Quit"/>
             </ContextMenu>
         </Border.ContextMenu>

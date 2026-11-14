@@ -139,8 +139,6 @@ public partial class MainWindow
 
     // ---------- Auto: anything you copy (files, images, screenshots) lands on the shelf by itself ----------
 
-    static readonly string AutoOffFile = System.IO.Path.Combine(IslandFolder, "auto-shelf-off");
-    bool autoShelf = !File.Exists(AutoOffFile);
 
     // Asks Windows to tell this window every time the clipboard changes.
     void WatchClipboard()
@@ -172,7 +170,9 @@ public partial class MainWindow
                 var data = Clipboard.GetDataObject();
                 if (IsPrivate(data)) return;
                 if (data.GetData(DataFormats.UnicodeText) is string text && !data.GetDataPresent(DataFormats.FileDrop)) Remember(text);
-                if (!autoShelf) return;
+                if (!settings.AutoShelf) return;
+                bool justText = data.GetDataPresent(DataFormats.UnicodeText) && !data.GetDataPresent(DataFormats.FileDrop) && !VirtualFiles.Present(data);
+                if (justText && !settings.TextToShelf) return;
                 var added = AddFrom(data);
                 if (added != null) ShowAlert(added.Icon, "Shelf · " + added.Name, ShelfIndex);
                 return;
@@ -189,14 +189,12 @@ public partial class MainWindow
 
     void ToggleAuto(object sender, RoutedEventArgs e)
     {
-        autoShelf = !autoShelf;
-        Directory.CreateDirectory(IslandFolder);
-        if (autoShelf) File.Delete(AutoOffFile);
-        else File.WriteAllText(AutoOffFile, "");
+        settings.AutoShelf = !settings.AutoShelf;
+        settings.Save();
         ShowAutoState();
     }
 
-    void ShowAutoState() => AutoButton.Background = autoShelf ? Blue : Gray;
+    void ShowAutoState() => AutoButton.Background = settings.AutoShelf ? Blue : Gray;
 
     [DllImport("user32.dll")] static extern bool AddClipboardFormatListener(IntPtr window);
 

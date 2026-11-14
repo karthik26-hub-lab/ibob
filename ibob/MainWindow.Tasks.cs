@@ -106,7 +106,7 @@ public partial class MainWindow
 
     void Remind(string text)
     {
-        SystemSounds.Asterisk.Play();
+        Chime();
         ShowAlert(null, text, TasksIndex);
     }
 

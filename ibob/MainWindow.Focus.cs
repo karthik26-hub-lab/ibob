@@ -56,7 +56,7 @@ public partial class MainWindow
         if (focusLeft > TimeSpan.Zero) { ShowFocus(); return; }
 
         // Time's up: chime, flash the pill, and line up the next step.
-        SystemSounds.Asterisk.Play();
+        Chime();
         if (onBreak)
         {
             ShowAlert(null, "Break over · back to it", FocusIndex);

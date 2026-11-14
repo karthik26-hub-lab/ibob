@@ -125,7 +125,7 @@ public partial class MainWindow
         foreach (var m in meetings.Where(m => !m.AllDay && m.Start > now && m.Start - now <= RemindBefore))
         {
             if (!reminded.Add(m.Title + m.Start)) continue;
-            SystemSounds.Asterisk.Play();
+            Chime();
             ShowAlert(null, $"{m.Title} in {Math.Ceiling((m.Start - now).TotalMinutes)} min", TodayIndex);
         }
         if (isOpen && page == TodayIndex && now.Second == 0) ShowToday();   // keep "in 25 min" current

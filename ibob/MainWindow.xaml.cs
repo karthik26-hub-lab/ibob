@@ -46,8 +46,9 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        Left = (SystemParameters.PrimaryScreenWidth - Width) / 2;
-        SourceInitialized += (_, _) => { HideFromAltTab(); WatchClipboard(); };
+        SourceInitialized += (_, _) => { HideFromAltTab(); WatchClipboard(); ApplySettings(); };
+        // Monitors plugged in/out or resolution changed: move back to the top centre of the chosen screen.
+        Microsoft.Win32.SystemEvents.DisplaySettingsChanged += (_, _) => Dispatcher.Invoke(PlaceOnScreen);
 
         var clock = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         clock.Tick += (_, _) => Refresh();
@@ -370,7 +371,7 @@ public partial class MainWindow : Window
     void Collapse(object sender, MouseEventArgs e)
     {
         if (sender != null && radialOpen) return;
-        Animate(84, 22, open: false);
+        Animate(PillWidth, PillHeight, open: false);
     }
 
     FrameworkElement[] Pages => new FrameworkElement[]
@@ -379,13 +380,14 @@ public partial class MainWindow : Window
     // Wheel down → next page, wheel up → previous page.
     void Scrolled(object sender, MouseWheelEventArgs e)
     {
-        int next = Math.Clamp(page + (e.Delta < 0 ? 1 : -1), 0, Pages.Length - 1);
+        int next = NextShownPage(page, e.Delta < 0 ? 1 : -1);   // skips pages hidden in Settings
         if (isOpen && !boardOpen && next != page) ShowPage(next);
     }
 
     // Slides the chosen page in from the direction you scrolled.
     void ShowPage(int index)
     {
+        index = ShownPage(index);
         double from = index > page ? 30 : -30;
         page = index;
         var pages = Pages;
@@ -407,7 +409,7 @@ public partial class MainWindow : Window
     {
         isOpen = open;
         if (!open) { HideBoard(); CloseRadial(); EndMerge(); }
-        SizePill(width, height, open ? 28 : 11, open ? 380 : 220);
+        SizePill(width, height, open ? 28 : height / 2, open ? 380 : 220);
 
         Mini.Visibility = open ? Visibility.Collapsed : Visibility.Visible;
         Big.Visibility = Dots.Visibility = open ? Visibility.Visible : Visibility.Collapsed;
