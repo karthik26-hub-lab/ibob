@@ -27,7 +27,8 @@ public partial class MainWindow : Window
     static readonly Brush Gray = new SolidColorBrush(Color.FromRgb(44, 44, 46));
     static readonly Brush Blue = new SolidColorBrush(Color.FromRgb(10, 132, 255));
     const string PlayGlyph = "", PauseGlyph = "";
-    const int MusicIndex = 0, TodayIndex = 1, ControlsIndex = 2, NotificationsIndex = 3, ShelfIndex = 4, ClipboardIndex = 5, FocusIndex = 6;
+    const int MusicIndex = 0, TodayIndex = 1, TasksIndex = 2, NotesIndex = 3, ControlsIndex = 4,
+              NotificationsIndex = 5, ShelfIndex = 6, ClipboardIndex = 7, FocusIndex = 8;
 
     readonly MMDeviceEnumerator devices = new();
     MMDevice speaker, mic;
@@ -64,6 +65,7 @@ public partial class MainWindow : Window
         LoadShelf();
         LoadHistory();
         LoadCalendars();
+        LoadTasksAndNotes();
         SetUpFocus();
         StartNotifications();
     }
@@ -109,6 +111,7 @@ public partial class MainWindow : Window
 
         // The heavier checks only run while the panel is open.
         CheckToday();
+        CheckTasks();
         if (isOpen) { RefreshMusic(); RefreshControls(); }
     }
 
@@ -370,7 +373,8 @@ public partial class MainWindow : Window
         Animate(84, 22, open: false);
     }
 
-    FrameworkElement[] Pages => new FrameworkElement[] { MusicPage, TodayPage, ControlsPage, NotificationsPage, ShelfPage, ClipboardPage, FocusPage };
+    FrameworkElement[] Pages => new FrameworkElement[]
+        { MusicPage, TodayPage, TasksPage, NotesPage, ControlsPage, NotificationsPage, ShelfPage, ClipboardPage, FocusPage };
 
     // Wheel down → next page, wheel up → previous page.
     void Scrolled(object sender, MouseWheelEventArgs e)

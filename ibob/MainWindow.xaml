@@ -357,6 +357,67 @@
                     </Grid>
                 </DockPanel>
 
+                <!-- Tasks: to-do list with due-date countdowns -->
+                <DockPanel x:Name="TasksPage" Visibility="Collapsed" Height="164">
+                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <Button Style="{StaticResource Chip}" DockPanel.Dock="Right" Padding="12,3" Margin="8,0,0,0" Click="ClearDoneTasks">
+                            <TextBlock Text="Clear done" FontSize="11"/>
+                        </Button>
+                        <TextBlock Text="Tasks" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <Border CornerRadius="13" Background="#2C2C2E" Padding="10,0" Height="26">
+                            <Grid>
+                                <TextBlock x:Name="TaskHint" Text="Add a task, e.g. DBMS assignment fri 5pm" FontSize="12" Foreground="#8E8E93"
+                                           VerticalAlignment="Center" IsHitTestVisible="False" TextTrimming="CharacterEllipsis"/>
+                                <TextBox x:Name="NewTask" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White"
+                                         FontSize="12" VerticalAlignment="Center" PreviewKeyDown="NewTaskKey" TextChanged="NewTaskChanged"/>
+                            </Grid>
+                        </Border>
+                    </DockPanel>
+                    <Grid>
+                        <TextBlock x:Name="NoTasks" FontSize="12" Foreground="#8E8E93" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"
+                                   Text="Nothing to do. Type a task above and press Enter.&#x0a;Add a day or time at the end for a countdown."/>
+                        <ScrollViewer VerticalScrollBarVisibility="Hidden">
+                            <ItemsControl x:Name="TaskList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Height="27" Opacity="{Binding Fade}">
+                                            <TextBlock DockPanel.Dock="Left" Text="{Binding Check}" Style="{StaticResource Icon}" FontSize="15" Width="24"
+                                                       Background="Transparent" Cursor="Hand" ToolTip="Done / not done" MouseLeftButtonUp="TaskToggle"/>
+                                            <TextBlock DockPanel.Dock="Right" Text="&#xE711;" Style="{StaticResource Icon}" FontSize="10" Foreground="#8E8E93"
+                                                       Padding="6" Background="Transparent" Cursor="Hand" ToolTip="Delete" MouseLeftButtonUp="TaskDelete"/>
+                                            <TextBlock DockPanel.Dock="Right" Text="{Binding DueText}" Foreground="{Binding DueColor}" FontSize="11"
+                                                       VerticalAlignment="Center" Margin="8,0,0,0" ToolTip="{Binding DueDate}"/>
+                                            <TextBlock Text="{Binding Text}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                                       TextDecorations="{Binding Strike}"/>
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+                </DockPanel>
+
+                <!-- Notes: a notepad that saves as you type -->
+                <DockPanel x:Name="NotesPage" Visibility="Collapsed" Height="164">
+                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button Style="{StaticResource Chip}" Padding="12,3" Click="CopyNotes"><TextBlock Text="Copy" FontSize="11"/></Button>
+                            <Button Style="{StaticResource Chip}" Padding="12,3" Margin="6,0,0,0" Click="NotesToShelf" ToolTip="Save a copy as a text file on the shelf">
+                                <TextBlock Text="To shelf" FontSize="11"/>
+                            </Button>
+                        </StackPanel>
+                        <TextBlock Text="Notes" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="NotesStatus" FontSize="11" Foreground="#8E8E93" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <Border CornerRadius="10" Background="#1C1C1E" Padding="10,6">
+                        <Grid>
+                            <TextBlock x:Name="NotesHint" Text="Jot something down… it saves by itself." FontSize="12" Foreground="#8E8E93" IsHitTestVisible="False"/>
+                            <TextBox x:Name="NotesBox" AcceptsReturn="True" AcceptsTab="True" TextWrapping="Wrap" Background="Transparent" BorderThickness="0"
+                                     Foreground="White" CaretBrush="White" FontSize="12" VerticalScrollBarVisibility="Hidden" TextChanged="NotesChanged"/>
+                        </Grid>
+                    </Border>
+                </DockPanel>
+
                 <!-- Page 5: clipboard history -->
                 <DockPanel x:Name="ClipboardPage" Visibility="Collapsed" Height="164">
                     <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
@@ -459,6 +520,8 @@
 
             <!-- Page dots on the right edge, hinting that you can scroll -->
             <StackPanel x:Name="Dots" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,9,0" Visibility="Collapsed">
+                <Ellipse Width="5" Height="5" Fill="White" Margin="0,3"/>
+                <Ellipse Width="5" Height="5" Fill="White" Margin="0,3"/>
                 <Ellipse Width="5" Height="5" Fill="White" Margin="0,3"/>
                 <Ellipse Width="5" Height="5" Fill="White" Margin="0,3"/>
                 <Ellipse Width="5" Height="5" Fill="White" Margin="0,3"/>
