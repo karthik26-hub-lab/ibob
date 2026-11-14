@@ -66,7 +66,7 @@ calendar links you add yourself.
 Requires the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 
 ```bash
-git clone https://github.com/<your-username>/ibob.git
+git clone https://github.com/karthik26-hub-lab/ibob.git
 cd ibob
 dotnet run --project ibob
 ```
