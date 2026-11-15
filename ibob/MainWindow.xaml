@@ -274,7 +274,7 @@
                         </StackPanel>
                     </DockPanel>
                     <Grid>
-                        <TextBlock x:Name="ShelfHint" Text="Copy text, a file, an image or a screenshot and it lands here.&#x0a;Drag items out to use them, right-click for more."
+                        <TextBlock x:Name="ShelfHint" Text="Copy or drop a file, image or screenshot and it lands here.&#x0a;Drag items out to use them, right-click for more."
                                    FontSize="12" Foreground="#8E8E93" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
                         <ItemsControl x:Name="ShelfList">
                             <ItemsControl.ItemsPanel>

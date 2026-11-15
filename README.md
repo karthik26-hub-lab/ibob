@@ -39,7 +39,7 @@ Hover it and it springs open, with a row of tabs along the top: click one to jum
 | **Home** | What's playing (artwork, seek bar, play / pause / skip), volume, brightness, Wi-Fi, Bluetooth and mic mute |
 | **Plan** | Your next meetings and classes from a calendar link, with a **Join** button for Teams / Zoom / Meet, and your tasks: type `DBMS assignment fri 5pm` and it gets a live countdown and reminders |
 | **Notes** | A quick notepad that saves as you type |
-| **Shelf** | Anything you copy or drop on ibob (files, images, screenshots, text) waits here to be dragged out later |
+| **Shelf** | Files, images and screenshots you copy or drop on ibob wait here to be dragged out later (copied text goes to Clipboard) |
 | **Clipboard** | Searchable history of copied text, with pins for things you reuse |
 | **Focus** | Pomodoro timer with a progress ring in the pill |
 

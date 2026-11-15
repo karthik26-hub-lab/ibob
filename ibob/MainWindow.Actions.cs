@@ -290,7 +290,7 @@ public partial class MainWindow
     }
 
     // Reads the text in an image (screenshots, photos of slides or notes) with Windows' built-in OCR,
-    // copies it, and puts it on the shelf and in clipboard history.
+    // copies it, and keeps it in the Clipboard tab.
     async void ExtractText(ShelfItem item)
     {
         SetShelfStatus("Reading text…");
@@ -310,7 +310,7 @@ public partial class MainWindow
             ignoreClipboardUntil = DateTime.Now.AddSeconds(1);
             Clipboard.SetText(text);
             Remember(text);
-            Finished(SaveText(text), "Text copied");
+            SetShelfStatus("Text copied · also in the Clipboard tab");
         }
         catch (Exception e) { SetShelfStatus("Couldn't read text: " + e.Message); }
     }

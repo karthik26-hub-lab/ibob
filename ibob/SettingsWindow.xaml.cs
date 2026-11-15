@@ -23,7 +23,6 @@ public partial class SettingsWindow : Window
         Toggle(StartWithWindows, settings.StartWithWindows, on => settings.StartWithWindows = on);
         Toggle(Sounds, settings.Sounds, on => settings.Sounds = on);
         Toggle(AutoShelf, settings.AutoShelf, on => settings.AutoShelf = on);
-        Toggle(TextToShelf, settings.TextToShelf, on => settings.TextToShelf = on);
         Toggle(ClipboardHistory, settings.ClipboardHistory, on => settings.ClipboardHistory = on);
         StartWithWindows.IsEnabled = Installer.IsInstalled;   // a portable copy can't start with Windows
 

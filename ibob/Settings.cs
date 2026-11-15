@@ -13,7 +13,6 @@ public class Settings
     public string Screen { get; set; } = "";                // monitor's device name; empty = main monitor
     public List<string> HiddenPages { get; set; } = new();  // page names, e.g. "Music", "Focus"
     public bool AutoShelf { get; set; } = true;             // copied files/images land on the shelf
-    public bool TextToShelf { get; set; } = true;           // copied text lands on the shelf too
     public bool ClipboardHistory { get; set; } = true;      // keep a searchable history of copied text
     public bool Sounds { get; set; } = true;                // chime for reminders and timers
 

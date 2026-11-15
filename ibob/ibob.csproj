@@ -5,7 +5,7 @@
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <ApplicationIcon>ibob.ico</ApplicationIcon>
     <Product>ibob</Product>
     <Description>A dynamic-island style pill for Windows</Description>

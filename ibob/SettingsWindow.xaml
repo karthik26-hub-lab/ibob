@@ -63,7 +63,6 @@
 
             <TextBlock Style="{StaticResource Section}" Text="SHELF AND CLIPBOARD"/>
             <CheckBox x:Name="AutoShelf" Content="Put copied files, images and screenshots on the shelf"/>
-            <CheckBox x:Name="TextToShelf" Content="Put copied text on the shelf too"/>
             <CheckBox x:Name="ClipboardHistory" Content="Keep a searchable history of copied text"/>
             <TextBlock Style="{StaticResource Note}" Text="Copies from password managers are always skipped. Turning history off clears it (pinned items stay)."/>
             <StackPanel Orientation="Horizontal" Margin="0,10,0,0">

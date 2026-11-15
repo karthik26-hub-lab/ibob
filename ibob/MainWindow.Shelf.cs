@@ -132,10 +132,25 @@ public partial class MainWindow
         if (!MouseInsidePill()) Collapse(null, null);
     }
 
-    void FilesDropped(object sender, DragEventArgs e) => AddFrom(e.Data);
+    void FilesDropped(object sender, DragEventArgs e) => TakeIn(e.Data);
 
     // Paste works like a drop, but reads from the clipboard (copied files, a copied WhatsApp photo, a screenshot).
-    void PasteToShelf(object sender, RoutedEventArgs e) => AddFrom(Clipboard.GetDataObject());
+    void PasteToShelf(object sender, RoutedEventArgs e) => TakeIn(Clipboard.GetDataObject());
+
+    // The shelf is for files; plain text goes to the Clipboard tab instead.
+    void TakeIn(IDataObject data)
+    {
+        if (IsJustText(data) && data.GetData(DataFormats.UnicodeText) is string text)
+        {
+            Remember(text);
+            SetShelfStatus("Text saved in the Clipboard tab");
+        }
+        else AddFrom(data);
+    }
+
+    // Text with no files attached (Excel cells count as text too, even though they also carry a picture).
+    static bool IsJustText(IDataObject data) =>
+        data.GetDataPresent(DataFormats.UnicodeText) && !data.GetDataPresent(DataFormats.FileDrop) && !VirtualFiles.Present(data);
 
     // ---------- Auto: anything you copy (files, images, screenshots) lands on the shelf by itself ----------
 
@@ -158,7 +173,7 @@ public partial class MainWindow
         return IntPtr.Zero;
     }
 
-    // Copied text always goes into clipboard history; with Auto on, copies also land on the shelf.
+    // Copied text goes into the Clipboard tab; with Auto on, copied files and images also land on the shelf.
     // The app that just copied may still be holding the clipboard, so retry briefly.
     async void TakeFromClipboard()
     {
@@ -170,9 +185,7 @@ public partial class MainWindow
                 var data = Clipboard.GetDataObject();
                 if (IsPrivate(data)) return;
                 if (data.GetData(DataFormats.UnicodeText) is string text && !data.GetDataPresent(DataFormats.FileDrop)) Remember(text);
-                if (!settings.AutoShelf) return;
-                bool justText = data.GetDataPresent(DataFormats.UnicodeText) && !data.GetDataPresent(DataFormats.FileDrop) && !VirtualFiles.Present(data);
-                if (justText && !settings.TextToShelf) return;
+                if (!settings.AutoShelf || IsJustText(data)) return;
                 var added = AddFrom(data);
                 if (added != null) ShowAlert(added.Icon, "Shelf · " + added.Name, ShelfIndex);
                 return;
@@ -198,19 +211,12 @@ public partial class MainWindow
 
     [DllImport("user32.dll")] static extern bool AddClipboardFormatListener(IntPtr window);
 
-    string lastText;   // so copying the same text twice doesn't add it twice
-
-    // Order matters: files first, then text (so Excel cells come in as text, not a picture), then images.
+    // Order matters: files first, then images. Plain text never becomes a shelf file (it lives in the Clipboard tab).
     IEnumerable<string> DroppedFiles(IDataObject data)
     {
         if (data.GetData(DataFormats.FileDrop) is string[] paths) return paths.Select(KeepIfTemporary);
         if (VirtualFiles.Present(data)) return VirtualFiles.Save(data, ShelfFolder);
-        if (data.GetData(DataFormats.UnicodeText) is string text && !string.IsNullOrWhiteSpace(text))
-        {
-            if (text == lastText) return Array.Empty<string>();
-            lastText = text;
-            return new[] { SaveText(text) };
-        }
+        if (IsJustText(data)) return Array.Empty<string>();
         if (data.GetData("PNG") is MemoryStream png) return new[] { SavePng(png) };   // keeps transparency, unlike Bitmap
         if (data.GetData(DataFormats.Bitmap) is BitmapSource image) return new[] { SaveImage(image) };
         return Array.Empty<string>();
